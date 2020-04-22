@@ -4,7 +4,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.iesvirgendelcarmen.periodicowordpress.model.Resource
 import com.iesvirgendelcarmen.periodicowordpress.model.api.MediaCallback
-import com.iesvirgendelcarmen.periodicowordpress.model.api.MediaRepository
+import com.iesvirgendelcarmen.periodicowordpress.model.api.MediaRepositoryVolley
 import com.iesvirgendelcarmen.periodicowordpress.model.api.RepositoryDatasource
 import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.Media
 import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.MediaDetails
@@ -16,7 +16,7 @@ class MediaViewModel: ViewModel() {
 
     val mediaLiveData = MutableLiveData<Resource<Media>>()
 
-    val repository: RepositoryDatasource.Media = MediaRepository
+    val repository: RepositoryDatasource.Media = MediaRepositoryVolley
 
     fun getMediaById(id :Int) {
         repository.readMediaById(id, object: MediaCallback.OneMedia {

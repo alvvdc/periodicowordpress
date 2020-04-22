@@ -4,7 +4,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.iesvirgendelcarmen.periodicowordpress.model.Resource
 import com.iesvirgendelcarmen.periodicowordpress.model.api.CategoryCallback
-import com.iesvirgendelcarmen.periodicowordpress.model.api.CategoryRepository
+import com.iesvirgendelcarmen.periodicowordpress.model.api.CategoryRepositoryVolley
 import com.iesvirgendelcarmen.periodicowordpress.model.api.RepositoryDatasource
 import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.Category
 
@@ -12,7 +12,7 @@ class CategoryViewModel: ViewModel() {
 
     val categoryLiveData = MutableLiveData<Resource<Category>>()
 
-    private val repository: RepositoryDatasource.Category = CategoryRepository
+    private val repository: RepositoryDatasource.Category = CategoryRepositoryVolley
 
     fun getCategoryById(id :Int) {
         repository.readCategoryById(id, object: CategoryCallback.OneCategory {
