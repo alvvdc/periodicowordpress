@@ -1,5 +1,6 @@
 package com.iesvirgendelcarmen.periodicowordpress.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
@@ -13,6 +14,7 @@ class PostBoViewModel(): ViewModel() {
 
     private val postRepository = PostRepositoryVolley
     private val mediaRepository = MediaRepositoryVolley
+    private val userRepository = UserRepositoryVolley
     private val categoryRepository = CategoryRepositoryVolley
 
     fun getAllPostsBo()
@@ -35,7 +37,6 @@ class PostBoViewModel(): ViewModel() {
                     postBo.link = post.link
                     postBo.title = post.title
                     postBo.content = post.content
-                    postBo.author = post.author
 
 
                     val mediaId = post.featuredMedia
@@ -58,6 +59,22 @@ class PostBoViewModel(): ViewModel() {
                         })
                     }
 
+                    val authorId = post.author
+                    userRepository.readUserById(authorId, object: UserCallback.OneUser
+                    {
+                        override fun onResponse(user: User) {
+                            postBo.author = user
+                        }
+
+                        override fun onError(message: String) {
+
+                        }
+
+                        override fun onLoading() {
+
+                        }
+
+                    })
 
 
                     val categoriesIds = post.categories

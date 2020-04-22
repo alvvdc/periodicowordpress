@@ -18,5 +18,8 @@ class Endpoint {
 
         val MEDIA = "media"
         val MEDIA_URL = "$BASE_URL$MEDIA"
+
+        val USERS = "users"
+        val USER_URL = "$BASE_URL$USERS"
     }
 }

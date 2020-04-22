@@ -12,4 +12,8 @@ interface RepositoryDatasource {
     interface Media {
         fun readMediaById(id: Int, callback: MediaCallback.OneMedia)
     }
+
+    interface User {
+        fun readUserById(id: Int, callback: UserCallback.OneUser)
+    }
 }
