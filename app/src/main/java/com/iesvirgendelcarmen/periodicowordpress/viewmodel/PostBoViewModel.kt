@@ -1,6 +1,5 @@
 package com.iesvirgendelcarmen.periodicowordpress.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
@@ -17,8 +16,26 @@ class PostBoViewModel(): ViewModel() {
     private val userRepository = UserRepositoryVolley
     private val categoryRepository = CategoryRepositoryVolley
 
-    fun getAllPostsBo()
+    fun getAllPostsBO()
     {
+        loadPosts(object: Request {
+            override fun onResponse(postsBO: List<PostBO>) {
+                postsBoListLiveData.value = Resource.success(postsBO)
+            }
+
+            override fun onError(message: String) {
+                postsBoListLiveData.value = Resource.error(message, emptyList())
+            }
+
+            override fun onLoading() {
+                postsBoListLiveData.value = Resource.loading(emptyList())
+            }
+        })
+    }
+
+    private fun loadPosts(callback: Request)
+    {
+        callback.onLoading()
 
         val postsBoList = mutableListOf<PostBO>()
 
@@ -27,7 +44,7 @@ class PostBoViewModel(): ViewModel() {
             override fun onResponse(posts: List<Post>)
             {
 
-                for (post in posts)
+                for ((index, post) in posts.withIndex())
                 {
                     val postBo = PostBO()
 
@@ -39,13 +56,53 @@ class PostBoViewModel(): ViewModel() {
                     postBo.content = post.content
 
 
-                    val mediaId = post.featuredMedia
-                    if (mediaId != 0)
-                    {
-                        mediaRepository.readMediaById(mediaId, object: MediaCallback.OneMedia
+                    fun addNewPostBO() {
+                        postsBoList.add(postBo)
+
+                        if (index >= posts.size - 1)
+                            callback.onResponse(postsBoList)
+                        else if (postsBoList.isNullOrEmpty())
+                            callback.onError("Error loading posts")
+                    }
+
+
+
+                    val categoriesIds = post.categories
+                    val categories = mutableListOf<Category>()
+
+                    fun loadCategories() {
+                        for ((index, categoryId) in categoriesIds.withIndex())
                         {
-                            override fun onResponse(media: Media) {
-                                postBo.featuredMedia = media
+
+                            categoryRepository.readCategoryById(categoryId, object: CategoryCallback.OneCategory
+                            {
+                                override fun onResponse(category: Category) {
+                                    categories.add(category)
+
+                                    if (index >= categoriesIds.size - 1)
+                                        addNewPostBO()
+                                }
+
+                                override fun onError(message: String) {
+
+                                }
+
+                            })
+                        }
+                    }
+
+                    postBo.categories = categories
+
+
+
+                    val authorId = post.author
+                    fun loadAuthor()
+                    {
+                        userRepository.readUserById(authorId, object: UserCallback.OneUser
+                        {
+                            override fun onResponse(user: User) {
+                                postBo.author = user
+                                loadCategories()
                             }
 
                             override fun onError(message: String) {
@@ -59,47 +116,27 @@ class PostBoViewModel(): ViewModel() {
                         })
                     }
 
-                    val authorId = post.author
-                    userRepository.readUserById(authorId, object: UserCallback.OneUser
+                    val mediaId = post.featuredMedia
+                    if (mediaId != 0)
                     {
-                        override fun onResponse(user: User) {
-                            postBo.author = user
-                        }
-
-                        override fun onError(message: String) {
-
-                        }
-
-                        override fun onLoading() {
-
-                        }
-
-                    })
-
-
-                    val categoriesIds = post.categories
-                    val categories = mutableListOf<Category>()
-
-                    for (categoryId in categoriesIds)
-                    {
-                        categoryRepository.readCategoryById(categoryId, object: CategoryCallback.OneCategory
+                        mediaRepository.readMediaById(mediaId, object: MediaCallback.OneMedia
                         {
-                            override fun onResponse(category: Category) {
-                                categories.add(category)
+                            override fun onResponse(media: Media) {
+                                postBo.featuredMedia = media
+                                loadAuthor()
                             }
 
                             override fun onError(message: String) {
 
                             }
 
+                            override fun onLoading() {
+
+                            }
+
                         })
                     }
-
-                    postBo.categories = categories
-                    postsBoList.add(postBo)
                 }
-
-                postsBoListLiveData.value = Resource.success(postsBoList)
             }
 
             override fun onError(message: String) {
@@ -110,5 +147,11 @@ class PostBoViewModel(): ViewModel() {
                 postsBoListLiveData.value = Resource.loading(emptyList())
             }
         })
+    }
+
+    private interface Request {
+        fun onResponse(postsBO: List<PostBO>)
+        fun onError(message: String)
+        fun onLoading()
     }
 }

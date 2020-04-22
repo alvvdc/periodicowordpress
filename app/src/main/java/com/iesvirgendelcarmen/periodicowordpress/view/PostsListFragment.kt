@@ -58,6 +58,6 @@ class PostsListFragment : Fragment() {
             }
         })
 
-        viewModel.getAllPostsBo()
+        viewModel.getAllPostsBO()
     }
 }
