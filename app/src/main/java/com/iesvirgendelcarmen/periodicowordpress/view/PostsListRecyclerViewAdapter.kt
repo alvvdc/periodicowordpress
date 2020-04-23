@@ -47,8 +47,13 @@ class PostsListRecyclerViewAdapter(var postsList: List<PostBO>): RecyclerView.Ad
             image.background = null
 
             var dateText = ""
-            val postDate = post.date
+            var postDate = post.date
             val actualDate = Date()
+
+            if (post.modified.after(post.date)) {
+                postDate = post.modified
+                dateIcon.setImageResource(R.drawable.ic_sync)
+            }
 
             val formattedHours = if (postDate.hours.toString().length > 1) postDate.hours.toString() else "0${postDate.hours}"
             val formattedMinutes = if (postDate.minutes.toString().length > 1) postDate.minutes.toString() else "0${postDate.minutes}"
@@ -60,9 +65,6 @@ class PostsListRecyclerViewAdapter(var postsList: List<PostBO>): RecyclerView.Ad
             }
             
             date.text = dateText
-
-            if (post.modified.after(post.date))
-                dateIcon.setImageResource(R.drawable.ic_sync)
 
 
             Glide.with(itemView)
