@@ -10,11 +10,13 @@ import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.*
 class PostBoViewModel(): ViewModel() {
 
     val postsBoListLiveData = MutableLiveData<Resource<List<PostBO>>>()
+    val postBoLiveData = MutableLiveData<Resource<PostBO>>()
 
     private val postRepository = PostRepositoryVolley
     private val mediaRepository = MediaRepositoryVolley
     private val userRepository = UserRepositoryVolley
     private val categoryRepository = CategoryRepositoryVolley
+    private val postBoRepository = PostBoRepositoryVolley
 
     fun getAllPostsBO()
     {
@@ -153,5 +155,23 @@ class PostBoViewModel(): ViewModel() {
         fun onResponse(postsBO: List<PostBO>)
         fun onError(message: String)
         fun onLoading()
+    }
+
+    fun getPostBoById(id: Int) {
+
+        postBoRepository.readPostBoById(id, object: PostBoCallback.OnePostBO {
+            override fun onResponse(postBO: PostBO) {
+                postBoLiveData.value = Resource.success(postBO)
+            }
+
+            override fun onError(message: String) {
+                postBoLiveData.value = Resource.error(message, PostBO())
+            }
+
+            override fun onLoading() {
+                postBoLiveData.value = Resource.loading(PostBO())
+            }
+
+        })
     }
 }

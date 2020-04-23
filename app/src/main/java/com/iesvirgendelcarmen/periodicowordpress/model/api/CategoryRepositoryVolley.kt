@@ -15,7 +15,7 @@ object CategoryRepositoryVolley: RepositoryDatasource.Category {
 
         val stringRequest = StringRequest(
             Request.Method.GET,
-            Endpoint.CATEGORY_URL + id,
+            Endpoint.CATEGORIES_URL + id,
             Response.Listener
             {
                 val category = GsonSingleton.getInstance().fromJson<Category>(it, Category::class.java)

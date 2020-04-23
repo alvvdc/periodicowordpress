@@ -15,7 +15,7 @@ object MediaRepositoryVolley: RepositoryDatasource.Media {
 
         val stringRequest = StringRequest(
             Request.Method.GET,
-            "${Endpoint.MEDIA_URL}/$id",
+            "${Endpoint.MEDIA_URL}$id",
             Response.Listener
             {
                 val media = GsonSingleton.getInstance().fromJson<Media>(it, Media::class.java)

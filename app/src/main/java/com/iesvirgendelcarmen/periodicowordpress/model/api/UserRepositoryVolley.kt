@@ -16,7 +16,7 @@ object UserRepositoryVolley: RepositoryDatasource.User {
 
         val stringRequest = StringRequest(
             Request.Method.GET,
-            "${Endpoint.USER_URL}/$id",
+            "${Endpoint.USERS_URL}$id",
             Response.Listener
             {
                 val user = GsonSingleton.getInstance().fromJson<User>(it, User::class.java)
