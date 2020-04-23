@@ -1,9 +1,11 @@
 package com.iesvirgendelcarmen.periodicowordpress.view
 
 import android.graphics.drawable.Drawable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
@@ -37,6 +39,7 @@ class PostsListRecyclerViewAdapter(var postsList: List<PostBO>): RecyclerView.Ad
         private val category = itemView.findViewById<TextView>(R.id.category)
         private val date = itemView.findViewById<TextView>(R.id.date)
         private val image = itemView.findViewById<ConstraintLayout>(R.id.cardConstraintLayout)
+        private val dateIcon = itemView.findViewById<ImageView>(R.id.dateIcon)
 
         fun bind(post: PostBO) {
             title.text = post.title.rendered
@@ -57,6 +60,9 @@ class PostsListRecyclerViewAdapter(var postsList: List<PostBO>): RecyclerView.Ad
             }
             
             date.text = dateText
+
+            if (post.modified.after(post.date))
+                dateIcon.setImageResource(R.drawable.ic_sync)
 
 
             Glide.with(itemView)
