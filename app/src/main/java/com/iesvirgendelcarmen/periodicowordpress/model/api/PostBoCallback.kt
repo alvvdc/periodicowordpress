@@ -8,4 +8,10 @@ interface PostBoCallback {
         fun onError(message: String)
         fun onLoading()
     }
+
+    interface ListPostBO {
+        fun onResponse(postsBO: List<PostBO>)
+        fun onError(message: String)
+        fun onLoading()
+    }
 }

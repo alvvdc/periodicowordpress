@@ -8,29 +8,39 @@ import com.google.gson.reflect.TypeToken
 import com.iesvirgendelcarmen.periodicowordpress.config.Endpoint
 import com.iesvirgendelcarmen.periodicowordpress.model.GsonSingleton
 import com.iesvirgendelcarmen.periodicowordpress.model.VolleySingleton
+import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostMapper
-import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.Category
-import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.Media
-import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.Post
-import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.User
+import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.*
+import java.util.*
 
 object PostBoRepositoryVolley {
     fun readPostBoById(id: Int, callback: PostBoCallback.OnePostBO) {
         callback.onLoading()
 
         getPostById(id, object: ObjectsRequest {
-            override fun onCompleted(
-                post: Post?,
-                media: Media?,
-                user: User?,
-                categories: List<Category>?
-            ) {
-                val postBO = PostMapper.transformDTOtoBO(post!!, media!!, user!!, categories!!)
+            override fun onCompleted(postBoObjects: PostBoObjects) {
+                val postBO = PostMapper.transformDTOtoBO(postBoObjects.post, postBoObjects.media!!, postBoObjects.author!!, postBoObjects.categories!!)
                 callback.onResponse(postBO)
             }
 
             override fun onError(message: String) {
                 callback.onError(message)
+            }
+        })
+    }
+
+    fun readPostsBo(callback: PostBoCallback.ListPostBO) {
+        getPostsBO(object: PostBoCallback.ListPostBO {
+            override fun onResponse(postsBO: List<PostBO>) {
+                callback.onResponse(postsBO)
+            }
+
+            override fun onError(message: String) {
+                callback.onError(message)
+            }
+
+            override fun onLoading() {
+                callback.onLoading()
             }
         })
     }
@@ -45,7 +55,50 @@ object PostBoRepositoryVolley {
             Response.Listener
             {
                 val post = GsonSingleton.getInstance().fromJson<Post>(it, Post::class.java)
-                getPostAdditionalObjects(post, callback)
+                getPostAdditionalObjects(PostBoObjects(post), callback)
+            },
+            Response.ErrorListener
+            {
+                callback.onError("Post Error: " + it.message)
+            }
+        )
+        VolleySingleton.getInstance().addToRequestQueue(stringRequest)
+    }
+
+
+    private fun getPostsBO(callback: PostBoCallback.ListPostBO) {
+        callback.onLoading()
+        VolleySingleton.getInstance().requestQueue
+
+        val stringRequest = StringRequest(
+            Request.Method.GET,
+            Endpoint.POSTS_URL,
+            Response.Listener
+            {
+                val listType = object: TypeToken<List<Post>>() {}.type
+                val posts = GsonSingleton.getInstance().fromJson<List<Post>>(it, listType)
+                val postsBO = mutableListOf<PostBO>()
+
+
+                for (post in posts) {
+
+                    getPostAdditionalObjects(PostBoObjects(post), object: ObjectsRequest {
+                        override fun onCompleted(postBoObjects: PostBoObjects) {
+
+                            val postBO = PostMapper.transformDTOtoBO(postBoObjects.post, postBoObjects.media!!, postBoObjects.author!!, postBoObjects.categories!!)
+                            postsBO.add(postBO)
+
+                            if (postsBO.size >= posts.size) {
+                                callback.onResponse(postsBO)
+                            }
+                        }
+
+                        override fun onError(message: String) {
+                            callback.onError("Posts BO Error: $message")
+                        }
+
+                    })
+                }
             },
             Response.ErrorListener
             {
@@ -58,22 +111,15 @@ object PostBoRepositoryVolley {
 
 
 
-    var media: Media? = null
-    var author: User? = null
-    var categories: List<Category>? = null
-    var postDTO: Post? = null
-
-    private fun getPostAdditionalObjects(post : Post, callback: ObjectsRequest) {
-        postDTO = post
-
-        requestMediaObject(post, callback)
-        requestUserObject(post, callback)
-        requestCategoriesObjects(post, callback)
+    private fun getPostAdditionalObjects(postBoObjects: PostBoObjects, callback: ObjectsRequest) {
+        requestMediaObject(postBoObjects, callback)
+        requestUserObject(postBoObjects, callback)
+        requestCategoriesObjects(postBoObjects, callback)
     }
 
-    private fun requestCategoriesObjects(post: Post, callback: ObjectsRequest) {
+    private fun requestCategoriesObjects(postBoObjects: PostBoObjects, callback: ObjectsRequest) {
         var categoriesIdsList = ""
-        for (category in post.categories)
+        for (category in postBoObjects.post.categories)
             categoriesIdsList += "$category,"
 
         VolleySingleton.getInstance().requestQueue
@@ -84,8 +130,8 @@ object PostBoRepositoryVolley {
             Response.Listener
             {
                 val listType = object : TypeToken<List<Category>>() {}.type
-                categories = GsonSingleton.getInstance().fromJson<List<Category>>(it, listType)
-                sendPostObjects(callback)
+                postBoObjects.categories = GsonSingleton.getInstance().fromJson<List<Category>>(it, listType)
+                sendPostObjects(postBoObjects, callback)
             },
             Response.ErrorListener {
                 callback.onError("Categories Error: " + it.message)
@@ -94,16 +140,16 @@ object PostBoRepositoryVolley {
         VolleySingleton.getInstance().addToRequestQueue(stringRequestCategories)
     }
 
-    private fun requestUserObject(post: Post, callback: ObjectsRequest) {
+    private fun requestUserObject(postBoObjects: PostBoObjects, callback: ObjectsRequest) {
         VolleySingleton.getInstance().requestQueue
 
         val stringRequestAuthor = StringRequest(
             Request.Method.GET,
-            "${Endpoint.USERS_URL}${post.author}",
+            "${Endpoint.USERS_URL}${postBoObjects.post.author}",
             Response.Listener
             {
-                author = GsonSingleton.getInstance().fromJson<User>(it, User::class.java)
-                sendPostObjects(callback)
+                postBoObjects.author = GsonSingleton.getInstance().fromJson<User>(it, User::class.java)
+                sendPostObjects(postBoObjects, callback)
             },
             Response.ErrorListener {
                 callback.onError("User Error: " + it.message)
@@ -112,32 +158,49 @@ object PostBoRepositoryVolley {
         VolleySingleton.getInstance().addToRequestQueue(stringRequestAuthor)
     }
 
-    private fun requestMediaObject(post: Post, callback: ObjectsRequest) {
-        VolleySingleton.getInstance().requestQueue
+    private fun requestMediaObject(postBoObjects: PostBoObjects, callback: ObjectsRequest) {
+        if (postBoObjects.post.featuredMedia > 0)
+        {
+            VolleySingleton.getInstance().requestQueue
 
-        val stringRequestMedia = StringRequest(
-            Request.Method.GET,
-            "${Endpoint.MEDIA_URL}${post.featuredMedia}",
-            Response.Listener
-            {
-                media = GsonSingleton.getInstance().fromJson<Media>(it, Media::class.java)
-                sendPostObjects(callback)
-            },
-            Response.ErrorListener {
-                callback.onError("Media Error: " + it.message)
-            }
-        )
-        VolleySingleton.getInstance().addToRequestQueue(stringRequestMedia)
+            val stringRequestMedia = StringRequest(
+                Request.Method.GET,
+                "${Endpoint.MEDIA_URL}${postBoObjects.post.featuredMedia}",
+                Response.Listener
+                {
+                    postBoObjects.media = GsonSingleton.getInstance().fromJson<Media>(it, Media::class.java)
+                    sendPostObjects(postBoObjects, callback)
+                },
+                Response.ErrorListener {
+                    callback.onError("Media Error: " + it.message)
+                }
+            )
+            VolleySingleton.getInstance().addToRequestQueue(stringRequestMedia)
+        }
+        else
+        {
+            postBoObjects.media = Media(-1, Date(), Date(), "", Rendered(""), -1, Rendered(""), Rendered(""), "", "", "", MediaDetails(-1, -1, "", Sizes()), -1, "")
+            sendPostObjects(postBoObjects, callback)
+        }
     }
 
-    private fun sendPostObjects(callback: ObjectsRequest) {
-        if (media != null && author != null && categories != null) {
-            callback.onCompleted(postDTO, media, author, categories)
+    private fun sendPostObjects(postBoObjects: PostBoObjects, callback: ObjectsRequest) {
+        if (postBoObjects.isPostCompleted()) {
+            callback.onCompleted(postBoObjects)
         }
     }
 
     private interface ObjectsRequest {
-        fun onCompleted(post: Post?, media: Media?, user: User?, categories: List<Category>?)
+        fun onCompleted(postBoObjects: PostBoObjects)
         fun onError(message :String)
+    }
+
+    data class PostBoObjects(
+        var post: Post,
+        var media: Media? = null,
+        var author: User? = null,
+        var categories: List<Category>? = null
+    ) {
+        fun isPostCompleted() = post != null && media != null && author != null && categories != null
     }
 }
