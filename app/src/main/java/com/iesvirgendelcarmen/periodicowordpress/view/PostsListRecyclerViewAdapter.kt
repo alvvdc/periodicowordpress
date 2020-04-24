@@ -17,7 +17,7 @@ import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import java.text.DateFormatSymbols
 import java.util.*
 
-class PostsListRecyclerViewAdapter(var postsList: List<PostBO>): RecyclerView.Adapter<PostsListRecyclerViewAdapter.PostViewHolder>() {
+class PostsListRecyclerViewAdapter(var postsList: MutableList<PostBO> = mutableListOf()): RecyclerView.Adapter<PostsListRecyclerViewAdapter.PostViewHolder>() {
 
     override fun getItemCount(): Int {
         return postsList.size
@@ -67,8 +67,19 @@ class PostsListRecyclerViewAdapter(var postsList: List<PostBO>): RecyclerView.Ad
             date.text = dateText
 
 
+            val mainUrlToLoad =
+                if (post.featuredMedia.mediaDetails.sizes.medium != null) post.featuredMedia.mediaDetails.sizes.medium?.sourceUrl
+                else post.featuredMedia.sourceUrl
+
             Glide.with(itemView)
-                .load(post.featuredMedia.mediaDetails.sizes.medium?.sourceUrl)
+                .load(mainUrlToLoad)
+                .placeholder(null)
+                .override(1024, 768)
+                .thumbnail(
+                    Glide.with(itemView)
+                        .load(post.featuredMedia.mediaDetails.sizes.thumbnail?.sourceUrl)
+                        .placeholder(null)
+                )
                 .into(object: CustomTarget<Drawable>() {
                     override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
                         image.background = resource

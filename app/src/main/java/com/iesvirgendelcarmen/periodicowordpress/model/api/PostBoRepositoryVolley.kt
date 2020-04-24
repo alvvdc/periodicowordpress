@@ -29,7 +29,7 @@ object PostBoRepositoryVolley {
         })
     }
 
-    fun readPostsBo(callback: PostBoCallback.ListPostBO) {
+    fun readPostsBo(callback: PostBoCallback.ListPostBO, page: Int = 1) {
         getPostsBO(object: PostBoCallback.ListPostBO {
             override fun onResponse(postsBO: List<PostBO>) {
                 callback.onResponse(postsBO)
@@ -42,7 +42,7 @@ object PostBoRepositoryVolley {
             override fun onLoading() {
                 callback.onLoading()
             }
-        })
+        }, page)
     }
 
 
@@ -66,13 +66,13 @@ object PostBoRepositoryVolley {
     }
 
 
-    private fun getPostsBO(callback: PostBoCallback.ListPostBO) {
+    private fun getPostsBO(callback: PostBoCallback.ListPostBO, page: Int = 1) {
         callback.onLoading()
         VolleySingleton.getInstance().requestQueue
 
         val stringRequest = StringRequest(
             Request.Method.GET,
-            Endpoint.POSTS_URL,
+            Endpoint.POSTS_URL + Endpoint.PER_PAGE + Endpoint.DEFAULT_PER_PAGE.toString() + Endpoint.PAGE + page.toString(),
             Response.Listener
             {
                 val listType = object: TypeToken<List<Post>>() {}.type

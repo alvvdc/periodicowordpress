@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 import com.iesvirgendelcarmen.periodicowordpress.R
+import com.iesvirgendelcarmen.periodicowordpress.config.Endpoint
 import com.iesvirgendelcarmen.periodicowordpress.model.Resource
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PostBoViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.PostViewModel
@@ -24,6 +25,9 @@ class PostsListFragment : Fragment() {
     }
 
     lateinit var postsListRecyclerViewAdapter: PostsListRecyclerViewAdapter
+    lateinit var postsListRecyclerViewOnScrollListener: PostsListRecyclerViewOnScrollListener
+
+    var page = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,12 +39,21 @@ class PostsListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
-        postsListRecyclerViewAdapter = PostsListRecyclerViewAdapter(emptyList())
+        postsListRecyclerViewAdapter = PostsListRecyclerViewAdapter()
+        val linearLayoutManager = LinearLayoutManager(context)
 
         recyclerView.apply {
-            layoutManager = LinearLayoutManager(context)
+            layoutManager = linearLayoutManager
             adapter = postsListRecyclerViewAdapter
         }
+
+        postsListRecyclerViewOnScrollListener = PostsListRecyclerViewOnScrollListener(object: PostsListRecyclerViewOnScrollListener.LoadMoreListener {
+            override fun onLoadMore() {
+                page++
+                viewModel.getPosts(page)
+            }
+        })
+        recyclerView.addOnScrollListener(postsListRecyclerViewOnScrollListener)
     }
 
     override fun onStart() {
@@ -49,8 +62,13 @@ class PostsListFragment : Fragment() {
         viewModel.postsBoListLiveData.observe(viewLifecycleOwner, Observer { resource ->
             when (resource.status) {
                 Resource.Status.SUCCESS -> {
-                    postsListRecyclerViewAdapter.postsList = resource.data
-                    postsListRecyclerViewAdapter.notifyDataSetChanged()
+                    postsListRecyclerViewAdapter.postsList.addAll(resource.data)
+
+                    val insertIndex = (page - 1) * 10
+                    postsListRecyclerViewAdapter.notifyItemRangeInserted(insertIndex, Endpoint.DEFAULT_PER_PAGE)
+
+                    if (postsListRecyclerViewOnScrollListener.isLoading)
+                        postsListRecyclerViewOnScrollListener.isLoading = false
                 }
                 Resource.Status.ERROR -> {
                     Toast.makeText(context, getString(R.string.LOADING_POSTS_ERROR), Toast.LENGTH_LONG).show()
@@ -59,5 +77,34 @@ class PostsListFragment : Fragment() {
         })
 
         viewModel.getPosts()
+    }
+}
+
+class PostsListRecyclerViewOnScrollListener(private val callback: LoadMoreListener): RecyclerView.OnScrollListener() {
+
+    private var visibleThreshold = Endpoint.DEFAULT_PER_PAGE
+    private var totalItemCount = 0
+    private var lastVisibleItem = 0
+    var isLoading = false
+
+    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+        super.onScrolled(recyclerView, dx, dy)
+
+        val linearLayoutManager = (recyclerView.layoutManager as LinearLayoutManager)
+
+        if (dy <= 0) return
+
+        totalItemCount = linearLayoutManager.itemCount
+        lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition()
+
+
+        if (!isLoading && totalItemCount <= lastVisibleItem + visibleThreshold) {
+            callback.onLoadMore()
+            isLoading = true
+        }
+    }
+
+    interface LoadMoreListener {
+        fun onLoadMore()
     }
 }
