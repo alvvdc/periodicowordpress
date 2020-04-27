@@ -1,6 +1,7 @@
 package com.iesvirgendelcarmen.periodicowordpress.view
 
 import android.graphics.drawable.Drawable
+import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -41,10 +42,19 @@ class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var p
         private val dateIcon = itemView.findViewById<ImageView>(R.id.dateIcon)
 
         fun bind(post: PostBO) {
-            title.text = post.title.rendered
+            bindComponents(post)
+            setDate(post)
+            loadFeatureImage(post)
+            setOnClickListener(post)
+        }
+
+        private fun bindComponents(post: PostBO) {
+            title.text = Html.fromHtml(post.title.rendered)
             category.text = if (post.categories.isNotEmpty()) post.categories[0].name.toUpperCase() else "OTROS"
             image.background = null
+        }
 
+        private fun setDate(post: PostBO) {
             var dateText = ""
             var postDate = post.date
             val actualDate = Date()
@@ -54,18 +64,27 @@ class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var p
                 dateIcon.setImageResource(R.drawable.ic_sync)
             }
 
-            val formattedHours = if (postDate.hours.toString().length > 1) postDate.hours.toString() else "0${postDate.hours}"
-            val formattedMinutes = if (postDate.minutes.toString().length > 1) postDate.minutes.toString() else "0${postDate.minutes}"
+            val formattedHours =
+                if (postDate.hours.toString().length > 1) postDate.hours.toString() else "0${postDate.hours}"
+            val formattedMinutes =
+                if (postDate.minutes.toString().length > 1) postDate.minutes.toString() else "0${postDate.minutes}"
 
             dateText += when (postDate.day) {
-                actualDate.day          -> "${itemView.context.getString(R.string.TODAY_AT)} ${formattedHours}h$formattedMinutes"
-                (actualDate.day - 1)    -> "${itemView.context.getString(R.string.YESTERDAY_AT)} ${formattedHours}h$formattedMinutes"
-                else                    -> "${postDate.date} ${DateFormatSymbols().months[postDate.month]}"
+                actualDate.day -> "${itemView.context.getString(R.string.TODAY_AT)} ${formattedHours}h$formattedMinutes"
+                (actualDate.day - 1) -> "${itemView.context.getString(R.string.YESTERDAY_AT)} ${formattedHours}h$formattedMinutes"
+                else -> "${postDate.date} ${DateFormatSymbols().months[postDate.month]}"
             }
-            
+
             date.text = dateText
+        }
 
+        private fun setOnClickListener(post: PostBO) {
+            itemView.setOnClickListener {
+                postListListener.onClickPost(post)
+            }
+        }
 
+        private fun loadFeatureImage(post: PostBO) {
             val mainUrlToLoad =
                 if (post.featuredMedia.mediaDetails.sizes.medium != null) post.featuredMedia.mediaDetails.sizes.medium?.sourceUrl
                 else post.featuredMedia.sourceUrl
@@ -79,8 +98,11 @@ class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var p
                         .load(post.featuredMedia.mediaDetails.sizes.thumbnail?.sourceUrl)
                         .placeholder(null)
                 )
-                .into(object: CustomTarget<Drawable>() {
-                    override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
+                .into(object : CustomTarget<Drawable>() {
+                    override fun onResourceReady(
+                        resource: Drawable,
+                        transition: Transition<in Drawable>?
+                    ) {
                         image.background = resource
                     }
 
@@ -88,10 +110,6 @@ class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var p
 
                     }
                 })
-
-            itemView.setOnClickListener {
-                postListListener.onClickPost(post)
-            }
         }
     }
 }

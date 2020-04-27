@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity(), PostListListener {
         val postDetailFragment = PostDetailFragment()
         postDetailFragment.arguments = bundle
 
-        supportFragmentManager.beginTransaction().replace(
+        supportFragmentManager.beginTransaction().add(
             R.id.container,
             postDetailFragment
         ).addToBackStack(null).commit()
