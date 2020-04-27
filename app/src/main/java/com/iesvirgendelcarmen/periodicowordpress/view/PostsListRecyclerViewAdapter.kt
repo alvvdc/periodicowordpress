@@ -1,5 +1,6 @@
 package com.iesvirgendelcarmen.periodicowordpress.view
 
+import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.text.Html
 import android.view.LayoutInflater
@@ -13,11 +14,12 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.iesvirgendelcarmen.periodicowordpress.R
+import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import java.text.DateFormatSymbols
 import java.util.*
 
-class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var postsList: MutableList<PostBO> = mutableListOf()): RecyclerView.Adapter<PostsListRecyclerViewAdapter.PostViewHolder>() {
+class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var sharePostListener: SharePostListener, var postsList: MutableList<PostBO> = mutableListOf()): RecyclerView.Adapter<PostsListRecyclerViewAdapter.PostViewHolder>() {
 
     override fun getItemCount(): Int {
         return postsList.size
@@ -40,12 +42,20 @@ class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var p
         private val date = itemView.findViewById<TextView>(R.id.date)
         private val image = itemView.findViewById<ConstraintLayout>(R.id.cardConstraintLayout)
         private val dateIcon = itemView.findViewById<ImageView>(R.id.dateIcon)
+        private val share = itemView.findViewById<ImageView>(R.id.share)
 
         fun bind(post: PostBO) {
             bindComponents(post)
             setDate(post)
             loadFeatureImage(post)
             setOnClickListener(post)
+            setOnShareListener(post)
+        }
+
+        private fun setOnShareListener(post: PostBO) {
+            share.setOnClickListener {
+                sharePostListener.onClickSharePost(post)
+            }
         }
 
         private fun bindComponents(post: PostBO) {
@@ -64,10 +74,8 @@ class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var p
                 dateIcon.setImageResource(R.drawable.ic_sync)
             }
 
-            val formattedHours =
-                if (postDate.hours.toString().length > 1) postDate.hours.toString() else "0${postDate.hours}"
-            val formattedMinutes =
-                if (postDate.minutes.toString().length > 1) postDate.minutes.toString() else "0${postDate.minutes}"
+            val formattedHours = if (postDate.hours.toString().length > 1) postDate.hours.toString() else "0${postDate.hours}"
+            val formattedMinutes = if (postDate.minutes.toString().length > 1) postDate.minutes.toString() else "0${postDate.minutes}"
 
             dateText += when (postDate.day) {
                 actualDate.day -> "${itemView.context.getString(R.string.TODAY_AT)} ${formattedHours}h$formattedMinutes"

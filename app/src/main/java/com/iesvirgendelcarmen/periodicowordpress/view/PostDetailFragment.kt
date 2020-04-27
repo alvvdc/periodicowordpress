@@ -1,5 +1,6 @@
 package com.iesvirgendelcarmen.periodicowordpress.view
 
+import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
@@ -18,6 +19,7 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 
 import com.iesvirgendelcarmen.periodicowordpress.R
+import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import java.text.DateFormatSymbols
 import java.util.*
@@ -36,9 +38,16 @@ class PostDetailFragment : Fragment() {
     private lateinit var contentTextView: TextView
     private lateinit var readTimeTextView: TextView
 
+    lateinit var sharePostListener: SharePostListener
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         getPostFromParcelable()
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        sharePostListener = context as SharePostListener
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -53,6 +62,13 @@ class PostDetailFragment : Fragment() {
         bindTextViews()
         setDate(view)
         loadFeatureImage(view)
+        setOnShareListener()
+    }
+
+    private fun setOnShareListener() {
+        shareImageView.setOnClickListener {
+            sharePostListener.onClickSharePost(post)
+        }
     }
 
     private fun setDate(view: View) {
@@ -65,10 +81,8 @@ class PostDetailFragment : Fragment() {
             dateImageView.setImageResource(R.drawable.ic_sync)
         }
 
-        val formattedHours =
-            if (postDate.hours.toString().length > 1) postDate.hours.toString() else "0${postDate.hours}"
-        val formattedMinutes =
-            if (postDate.minutes.toString().length > 1) postDate.minutes.toString() else "0${postDate.minutes}"
+        val formattedHours = if (postDate.hours.toString().length > 1) postDate.hours.toString() else "0${postDate.hours}"
+        val formattedMinutes = if (postDate.minutes.toString().length > 1) postDate.minutes.toString() else "0${postDate.minutes}"
 
         dateText += when (postDate.day) {
             actualDate.day -> "${view.context.getString(R.string.TODAY_AT)} ${formattedHours}h$formattedMinutes"
