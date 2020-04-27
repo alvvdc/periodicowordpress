@@ -1,14 +1,19 @@
 package com.iesvirgendelcarmen.periodicowordpress.model.wordpress
 
+import android.os.Parcel
+import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
+import kotlinx.android.parcel.Parcelize
 
+@Parcelize
 class MediaDetails(
-    width: Int,
-    height: Int,
-    file: String,
+    val width: Int,
+    val height: Int,
+    val file: String,
     val sizes: Sizes
-): MediaInfo(width, height, file)
+): Parcelable
 
+@Parcelize
 data class Sizes(
     val full: MediaSize? = null,
     val large: MediaSize? = null,
@@ -16,21 +21,15 @@ data class Sizes(
     val mediumLarge: MediaSize? = null,
     val medium: MediaSize? = null,
     val thumbnail: MediaSize? = null
-)
+): Parcelable
 
+@Parcelize
 class MediaSize(
-    width: Int,
-    height: Int,
-    file: String,
+    val width: Int,
+    val height: Int,
+    val file: String,
     @SerializedName("mime_type")
     val mimeType: String,
     @SerializedName("source_url")
     val sourceUrl: String
-): MediaInfo(width, height, file)
-
-open class MediaInfo(
-    val width: Int,
-    val height: Int,
-    val file: String
-)
-
+): Parcelable

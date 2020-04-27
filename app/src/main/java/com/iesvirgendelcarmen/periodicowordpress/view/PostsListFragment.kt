@@ -1,5 +1,6 @@
 package com.iesvirgendelcarmen.periodicowordpress.view
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -11,6 +12,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.iesvirgendelcarmen.periodicowordpress.MainActivity
 
 import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.config.Endpoint
@@ -26,6 +28,7 @@ class PostsListFragment : Fragment() {
 
     lateinit var postsListRecyclerViewAdapter: PostsListRecyclerViewAdapter
     lateinit var postsListRecyclerViewOnScrollListener: PostsListRecyclerViewOnScrollListener
+    lateinit var postListListener: PostListListener
 
     var page = 1
 
@@ -37,9 +40,14 @@ class PostsListFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_posts_list, container, false)
     }
 
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        postListListener = context as PostListListener
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
-        postsListRecyclerViewAdapter = PostsListRecyclerViewAdapter()
+        postsListRecyclerViewAdapter = PostsListRecyclerViewAdapter(postListListener)
         val linearLayoutManager = LinearLayoutManager(context)
 
         recyclerView.apply {

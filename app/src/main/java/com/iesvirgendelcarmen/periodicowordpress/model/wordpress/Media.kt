@@ -1,8 +1,11 @@
 package com.iesvirgendelcarmen.periodicowordpress.model.wordpress
 
+import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
+import kotlinx.android.parcel.Parcelize
 import java.util.*
 
+@Parcelize
 data class Media(
     val id: Int,
     val date: Date,
@@ -23,4 +26,4 @@ data class Media(
     val post: Int,
     @SerializedName("source_url")
     val sourceUrl: String
-)
+): Parcelable

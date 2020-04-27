@@ -1,7 +1,6 @@
 package com.iesvirgendelcarmen.periodicowordpress.view
 
 import android.graphics.drawable.Drawable
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,7 +16,7 @@ import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import java.text.DateFormatSymbols
 import java.util.*
 
-class PostsListRecyclerViewAdapter(var postsList: MutableList<PostBO> = mutableListOf()): RecyclerView.Adapter<PostsListRecyclerViewAdapter.PostViewHolder>() {
+class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var postsList: MutableList<PostBO> = mutableListOf()): RecyclerView.Adapter<PostsListRecyclerViewAdapter.PostViewHolder>() {
 
     override fun getItemCount(): Int {
         return postsList.size
@@ -89,6 +88,14 @@ class PostsListRecyclerViewAdapter(var postsList: MutableList<PostBO> = mutableL
 
                     }
                 })
+
+            itemView.setOnClickListener {
+                postListListener.onClickPost(post)
+            }
         }
     }
+}
+
+interface PostListListener {
+    fun onClickPost(post: PostBO)
 }

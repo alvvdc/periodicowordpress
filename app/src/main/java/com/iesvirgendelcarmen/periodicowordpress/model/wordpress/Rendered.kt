@@ -1,3 +1,7 @@
 package com.iesvirgendelcarmen.periodicowordpress.model.wordpress
 
-data class Rendered(val rendered: String)
+import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
+
+@Parcelize
+data class Rendered(val rendered: String): Parcelable
