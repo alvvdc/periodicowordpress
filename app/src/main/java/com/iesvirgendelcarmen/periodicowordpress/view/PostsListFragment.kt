@@ -12,6 +12,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.iesvirgendelcarmen.periodicowordpress.MainActivity
 
 import com.iesvirgendelcarmen.periodicowordpress.R
@@ -22,11 +23,13 @@ import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PostBoViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.PostViewModel
 
-class PostsListFragment : Fragment(), SetCategoryListener {
+class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, SetCategoryListener {
 
     private val viewModel by lazy {
         ViewModelProvider(this).get(PostBoViewModel::class.java)
     }
+
+    lateinit var swipeRefresh: SwipeRefreshLayout
 
     private lateinit var postsListRecyclerViewAdapter: PostsListRecyclerViewAdapter
     private lateinit var postsListRecyclerViewOnScrollListener: PostsListRecyclerViewOnScrollListener
@@ -63,12 +66,16 @@ class PostsListFragment : Fragment(), SetCategoryListener {
             override fun onLoadMore() {
                 if (!paginationStatus.isListEnded) {
                     paginationStatus.nextPage()
+                    swipeRefresh.isRefreshing = true
                     paginationStatus.isLoading = true
                     viewModel.getPosts(paginationStatus.page, paginationStatus.category)
                 }
             }
         })
         recyclerView.addOnScrollListener(postsListRecyclerViewOnScrollListener)
+
+        swipeRefresh = view.findViewById(R.id.swipeRefresh)
+        swipeRefresh.setOnRefreshListener(this)
     }
 
     override fun onStart() {
@@ -82,16 +89,20 @@ class PostsListFragment : Fragment(), SetCategoryListener {
 
                     if (resource.data.size < Endpoint.DEFAULT_PER_PAGE)
                         paginationStatus.isListEnded = true
+
+                    swipeRefresh.isRefreshing = false
+                    paginationStatus.isLoading = false
                 }
                 Resource.Status.ERROR -> {
                     Toast.makeText(context, getString(R.string.LOADING_POSTS_ERROR), Toast.LENGTH_LONG).show()
                 }
             }
-            paginationStatus.isLoading = false
         })
 
-        if (paginationStatus.page <= 1)
+        if (paginationStatus.page <= 1) {
+            swipeRefresh.isRefreshing = true
             viewModel.getPosts()
+        }
     }
 
     data class PaginationStatus(var isLoading: Boolean = false, var page: Int = 1, var isListEnded: Boolean = false, var category: Int = -1) {
@@ -110,6 +121,13 @@ class PostsListFragment : Fragment(), SetCategoryListener {
 
         paginationStatus.reset()
         paginationStatus.category = categoryId
+        viewModel.getPosts(paginationStatus.page, paginationStatus.category)
+    }
+
+    override fun onRefresh() {
+        postsListRecyclerViewAdapter.postsList = mutableListOf()
+
+        paginationStatus.reset()
         viewModel.getPosts(paginationStatus.page, paginationStatus.category)
     }
 }
