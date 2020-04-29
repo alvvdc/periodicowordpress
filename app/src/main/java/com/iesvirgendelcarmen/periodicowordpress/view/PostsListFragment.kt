@@ -18,19 +18,20 @@ import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
 import com.iesvirgendelcarmen.periodicowordpress.config.Endpoint
 import com.iesvirgendelcarmen.periodicowordpress.model.Resource
+import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PostBoViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.PostViewModel
 
-class PostsListFragment : Fragment() {
+class PostsListFragment : Fragment(), SetCategoryListener {
 
     private val viewModel by lazy {
         ViewModelProvider(this).get(PostBoViewModel::class.java)
     }
 
-    lateinit var postsListRecyclerViewAdapter: PostsListRecyclerViewAdapter
-    lateinit var postsListRecyclerViewOnScrollListener: PostsListRecyclerViewOnScrollListener
-    lateinit var postListListener: PostListListener
-    lateinit var sharePostListener: SharePostListener
+    private lateinit var postsListRecyclerViewAdapter: PostsListRecyclerViewAdapter
+    private lateinit var postsListRecyclerViewOnScrollListener: PostsListRecyclerViewOnScrollListener
+    private lateinit var postListListener: PostListListener
+    private lateinit var sharePostListener: SharePostListener
 
     val paginationStatus = PaginationStatus()
 
@@ -51,7 +52,7 @@ class PostsListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
         postsListRecyclerViewAdapter = PostsListRecyclerViewAdapter(postListListener, sharePostListener)
-        val linearLayoutManager = LinearLayoutManager(context)
+        val linearLayoutManager = NpaLinearLayoutManager(context)
 
         recyclerView.apply {
             layoutManager = linearLayoutManager
@@ -63,7 +64,7 @@ class PostsListFragment : Fragment() {
                 if (!paginationStatus.isListEnded) {
                     paginationStatus.nextPage()
                     paginationStatus.isLoading = true
-                    viewModel.getPosts(paginationStatus.page)
+                    viewModel.getPosts(paginationStatus.page, paginationStatus.category)
                 }
             }
         })
@@ -93,8 +94,23 @@ class PostsListFragment : Fragment() {
             viewModel.getPosts()
     }
 
-    data class PaginationStatus(var isLoading: Boolean = false, var page: Int = 1, var isListEnded: Boolean = false) {
+    data class PaginationStatus(var isLoading: Boolean = false, var page: Int = 1, var isListEnded: Boolean = false, var category: Int = -1) {
         fun nextPage() = page++
+
+        fun reset() {
+            isLoading = false
+            page = 1
+            isListEnded = false
+            category = -1
+        }
+    }
+
+    override fun onSetCategory(categoryId: Int) {
+        postsListRecyclerViewAdapter.postsList = mutableListOf()
+
+        paginationStatus.reset()
+        paginationStatus.category = categoryId
+        viewModel.getPosts(paginationStatus.page, paginationStatus.category)
     }
 }
 
@@ -113,4 +129,12 @@ class PostsListRecyclerViewOnScrollListener(private val callback: LoadMoreListen
     interface LoadMoreListener {
         fun onLoadMore()
     }
+}
+
+interface SetCategoryListener {
+    fun onSetCategory(categoryId: Int)
+}
+
+private class NpaLinearLayoutManager(context: Context?) : LinearLayoutManager(context) {
+    override fun supportsPredictiveItemAnimations() = false
 }

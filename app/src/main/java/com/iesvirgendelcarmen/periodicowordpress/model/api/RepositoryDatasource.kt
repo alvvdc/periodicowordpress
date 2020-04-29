@@ -7,6 +7,7 @@ interface RepositoryDatasource {
 
     interface Category {
         fun readCategoryById(id: Int, callback: CategoryCallback.OneCategory)
+        fun readAllCategories(listCategory: CategoryCallback.ListCategory, page: Int, perPage: Int)
     }
 
     interface Media {

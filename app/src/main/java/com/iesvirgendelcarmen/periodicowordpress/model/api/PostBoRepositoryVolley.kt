@@ -29,7 +29,7 @@ object PostBoRepositoryVolley {
         })
     }
 
-    fun readPostsBo(callback: PostBoCallback.ListPostBO, page: Int = 1) {
+    fun readPostsBo(callback: PostBoCallback.ListPostBO, page: Int = 1, category: Int = -1) {
         getPostsBO(object: PostBoCallback.ListPostBO {
             override fun onResponse(postsBO: List<PostBO>) {
                 callback.onResponse(postsBO)
@@ -42,7 +42,7 @@ object PostBoRepositoryVolley {
             override fun onLoading() {
                 callback.onLoading()
             }
-        }, page)
+        }, page, category)
     }
 
 
@@ -59,20 +59,25 @@ object PostBoRepositoryVolley {
             },
             Response.ErrorListener
             {
-                callback.onError("Post Error: " + it.message)
+                callback.onError("Post Error: " + it.message + " ${it.networkResponse.statusCode}  ${it.networkResponse.data.toString()}")
             }
         )
         VolleySingleton.getInstance().addToRequestQueue(stringRequest)
     }
 
 
-    private fun getPostsBO(callback: PostBoCallback.ListPostBO, page: Int = 1) {
+    private fun getPostsBO(callback: PostBoCallback.ListPostBO, page: Int = 1, category: Int = -1) {
         callback.onLoading()
         VolleySingleton.getInstance().requestQueue
 
+        val URL = if (category == -1)
+            Endpoint.POSTS_URL + Endpoint.PER_PAGE + Endpoint.DEFAULT_PER_PAGE.toString() + Endpoint.PAGE + page.toString()
+        else
+            Endpoint.POSTS_URL + Endpoint.PER_PAGE + Endpoint.DEFAULT_PER_PAGE.toString() + Endpoint.PAGE + page.toString() + Endpoint.CATEGORIES_OPTION + category
+
         val stringRequest = StringRequest(
             Request.Method.GET,
-            Endpoint.POSTS_URL + Endpoint.PER_PAGE + Endpoint.DEFAULT_PER_PAGE.toString() + Endpoint.PAGE + page.toString(),
+            URL,
             Response.Listener
             {
                 val listType = object: TypeToken<List<Post>>() {}.type
@@ -134,7 +139,7 @@ object PostBoRepositoryVolley {
                 sendPostObjects(postBoObjects, callback)
             },
             Response.ErrorListener {
-                callback.onError("Categories Error: " + it.message)
+                callback.onError("Categories Error: " + it.message + " ${it.networkResponse.statusCode}  ${it.networkResponse.data.toString()}")
             }
         )
         VolleySingleton.getInstance().addToRequestQueue(stringRequestCategories)
@@ -152,7 +157,7 @@ object PostBoRepositoryVolley {
                 sendPostObjects(postBoObjects, callback)
             },
             Response.ErrorListener {
-                callback.onError("User Error: " + it.message)
+                callback.onError("User Error: " + it.message + " ${it.networkResponse.statusCode}  ${it.networkResponse.data.toString()}")
             }
         )
         VolleySingleton.getInstance().addToRequestQueue(stringRequestAuthor)
@@ -172,7 +177,7 @@ object PostBoRepositoryVolley {
                     sendPostObjects(postBoObjects, callback)
                 },
                 Response.ErrorListener {
-                    callback.onError("Media Error: " + it.message)
+                    callback.onError("Media Error: " + it.message + " ${it.networkResponse.statusCode}  ${it.networkResponse.data.toString()}")
                 }
             )
             VolleySingleton.getInstance().addToRequestQueue(stringRequestMedia)

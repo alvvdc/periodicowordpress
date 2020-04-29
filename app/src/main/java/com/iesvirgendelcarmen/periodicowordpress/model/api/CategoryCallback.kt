@@ -7,4 +7,10 @@ interface CategoryCallback {
         fun onResponse(category: Category)
         fun onError(message: String)
     }
+
+    interface ListCategory {
+        fun onResponse(categories: List<Category>)
+        fun onError(message: String)
+        fun onLoading()
+    }
 }

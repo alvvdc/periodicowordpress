@@ -60,8 +60,15 @@ class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var s
 
         private fun bindComponents(post: PostBO) {
             title.text = Html.fromHtml(post.title.rendered)
-            category.text = if (post.categories.isNotEmpty()) post.categories[0].name.toUpperCase() else "OTROS"
             image.background = null
+
+            category.text =
+                if (post.categories.size > 1 && post.categories[0].name.toLowerCase() != "uncategorized")
+                    post.categories[1].name.toUpperCase()
+                else if (post.categories.isNotEmpty())
+                    post.categories[0].name.toUpperCase()
+                else
+                    "OTROS"
         }
 
         private fun setDate(post: PostBO) {

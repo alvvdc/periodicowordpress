@@ -6,4 +6,7 @@
     <string name="LOADING_POSTS_ERROR">Error cargando las publicaciones</string>
     <string name="TODAY_AT">Hoy a las</string>
     <string name="YESTERDAY_AT">Ayer a las</string>
+    <string name="open">OPEN</string>
+    <string name="close">CLOSE</string>
+    <string name="loadingCategoriesError">Error cargando las categorías</string>
 </resources>

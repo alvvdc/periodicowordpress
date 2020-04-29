@@ -12,18 +12,27 @@ class Endpoint {
 
         val POSTS = "posts"
         val POSTS_URL = "$BASE_URL$POSTS/"
-        val PAGE = "&page="
-        val PER_PAGE = "&per_page="
-        val DEFAULT_PER_PAGE = 10
 
         val CATEGORIES = "categories"
         val CATEGORIES_URL = "$BASE_URL$CATEGORIES/"
-        val INCLUDE = "&include="
 
         val MEDIA = "media"
         val MEDIA_URL = "$BASE_URL$MEDIA/"
 
         val USERS = "users"
         val USERS_URL = "$BASE_URL$USERS/"
+
+        val PAGE = "&page="
+        val PER_PAGE = "&per_page="
+        val DEFAULT_PER_PAGE = 10
+
+        val CATEGORIES_OPTION = "&categories="
+        val INCLUDE = "&include="
+        val ORDER_BY = "&orderby="
+        val ORDER = "&order="
+        val DESC = "desc"
+        val COUNT = "count"
+        val ORDER_BY_COUNT = "$ORDER_BY$COUNT"
+        val ORDER_DESC = "$ORDER$DESC"
     }
 }
