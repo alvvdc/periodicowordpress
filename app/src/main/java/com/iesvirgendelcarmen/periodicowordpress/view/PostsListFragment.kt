@@ -118,6 +118,7 @@ class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, SetC
 
     override fun onSetCategory(categoryId: Int) {
         postsListRecyclerViewAdapter.postsList = mutableListOf()
+        swipeRefresh.isRefreshing = true
 
         paginationStatus.reset()
         paginationStatus.category = categoryId

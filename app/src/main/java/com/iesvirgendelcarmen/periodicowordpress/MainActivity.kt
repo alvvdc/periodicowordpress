@@ -94,6 +94,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     override fun onBackPressed() {
+        supportActionBar?.show()
+
         if (drawerLayout.isDrawerOpen(GravityCompat.START))
             drawerLayout.closeDrawer(GravityCompat.START)
         else
@@ -102,6 +104,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         postsListFragment.onSetCategory(item.itemId)
+        drawerLayout.closeDrawer(GravityCompat.START)
         return true
     }
 
@@ -112,6 +115,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val postDetailFragment = PostDetailFragment()
         postDetailFragment.arguments = bundle
 
+        supportActionBar?.hide()
         supportFragmentManager.beginTransaction().add(
             R.id.container,
             postDetailFragment
