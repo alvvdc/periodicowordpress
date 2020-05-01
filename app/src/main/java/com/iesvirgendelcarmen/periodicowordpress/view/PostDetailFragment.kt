@@ -1,8 +1,8 @@
 package com.iesvirgendelcarmen.periodicowordpress.view
 
 import android.content.Context
+import android.graphics.Color
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.Bundle
 import android.text.Html
 import androidx.fragment.app.Fragment
@@ -11,8 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -20,6 +19,7 @@ import com.bumptech.glide.request.transition.Transition
 
 import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
+import com.iesvirgendelcarmen.periodicowordpress.config.CategoryColor
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import java.text.DateFormatSymbols
 import java.util.*
@@ -27,6 +27,7 @@ import java.util.*
 class PostDetailFragment : Fragment() {
 
     lateinit var post: PostBO
+    var categoryColor: Int = Color.parseColor("#5979a0")
 
     private lateinit var categoryTextView: TextView
     private lateinit var shareImageView: ImageView
@@ -37,12 +38,14 @@ class PostDetailFragment : Fragment() {
     private lateinit var dateImageView: ImageView
     private lateinit var contentTextView: TextView
     private lateinit var readTimeTextView: TextView
+    private lateinit var categoryCardView: CardView
 
-    lateinit var sharePostListener: SharePostListener
+    private lateinit var sharePostListener: SharePostListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         getPostFromParcelable()
+        getCategoryColorFromBundle()
     }
 
     override fun onAttach(context: Context) {
@@ -63,6 +66,9 @@ class PostDetailFragment : Fragment() {
         setDate(view)
         loadFeatureImage(view)
         setOnShareListener()
+
+        categoryCardView = view.findViewById(R.id.actionBar)
+        categoryCardView.setCardBackgroundColor(categoryColor)
     }
 
     private fun setOnShareListener() {
@@ -133,7 +139,7 @@ class PostDetailFragment : Fragment() {
     }
 
     private fun findViewsById(view: View) {
-        categoryTextView = view.findViewById(R.id.category)
+        categoryTextView = view.findViewById(R.id.name)
         shareImageView = view.findViewById(R.id.share)
         bookmarkImageView = view.findViewById(R.id.bookmark)
         featuredImageConstraintLayout = view.findViewById(R.id.featureImage)
@@ -147,6 +153,12 @@ class PostDetailFragment : Fragment() {
     private fun getPostFromParcelable() {
         if (arguments != null) {
             post = arguments?.getParcelable("POST") ?: PostBO()
+        }
+    }
+
+    private fun getCategoryColorFromBundle() {
+        if (arguments != null) {
+            categoryColor = arguments?.getInt("COLOR") ?: CategoryColor.DEFAULT_COLOR
         }
     }
 }

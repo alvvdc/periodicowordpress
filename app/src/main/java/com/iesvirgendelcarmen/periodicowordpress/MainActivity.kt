@@ -1,6 +1,9 @@
 package com.iesvirgendelcarmen.periodicowordpress
 
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.ColorFilter
+import android.graphics.PorterDuff
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -13,8 +16,13 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.navigation.NavigationView
+import com.iesvirgendelcarmen.periodicowordpress.config.CategoryColor
 import com.iesvirgendelcarmen.periodicowordpress.model.Resource
+import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCategory
+import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCategoryMapper
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.view.PostDetailFragment
 import com.iesvirgendelcarmen.periodicowordpress.view.PostListListener
@@ -22,13 +30,19 @@ import com.iesvirgendelcarmen.periodicowordpress.view.PostsListFragment
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.CategoryViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, PostListListener, SharePostListener {
+class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener, SharePostListener {
 
     private val categoryViewModel by lazy {
         ViewModelProvider(this).get(CategoryViewModel::class.java)
     }
 
     lateinit var postsListFragment: PostsListFragment
+    lateinit var categoriesRecyclerView: RecyclerView
+    lateinit var categoriesRecyclerViewAdapter: CategoriesRecyclerViewAdapter
+
+    val MAIN_CATEGORY_ID = -1
+
+    lateinit var menuCategoriesList: List<MenuCategory>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,10 +56,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val navigationView = findViewById<NavigationView>(R.id.navigationView)
-        navigationView.setNavigationItemSelectedListener(this)
-        addCategoriesToNavigationDrawer(navigationView)
-
+        addCategoriesToNavigationDrawer()
 
         postsListFragment = PostsListFragment()
 
@@ -55,21 +66,33 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 postsListFragment
             ).commit()
         }
+
+        categoriesRecyclerView = findViewById(R.id.recyclerView)
+        categoriesRecyclerView.layoutManager = LinearLayoutManager(this)
+
+        categoriesRecyclerViewAdapter = CategoriesRecyclerViewAdapter(emptyList(), this)
+        categoriesRecyclerView.adapter = categoriesRecyclerViewAdapter
     }
 
-    private fun addCategoriesToNavigationDrawer(navigationView: NavigationView) {
+    private fun addCategoriesToNavigationDrawer() {
         categoryViewModel.categoryListLiveData.observe(this, Observer { resource ->
 
             when (resource.status) {
                 Resource.Status.SUCCESS -> {
-                    val menu = navigationView.menu
-                    val categoryMenu = menu.addSubMenu("Categorías")
+
+                    val menuCategories = mutableListOf<MenuCategory>()
+                    val mainCategory = MenuCategory(MAIN_CATEGORY_ID, getString(R.string.homeCategory), resources.getColor(R.color.colorPrimary))
+                    menuCategories.add(mainCategory)
 
                     for (category in resource.data) {
-                        categoryMenu.add(Menu.NONE, category.id, Menu.NONE, category.name)
+                        val menuCategory = MenuCategoryMapper.convertCategoryToMenuCategory(category)
+                        menuCategories.add(menuCategory)
                     }
 
-                    navigationView.invalidate()
+                    menuCategoriesList = menuCategories
+                    postsListFragment.onCategoriesLoaded(menuCategories)
+                    categoriesRecyclerViewAdapter.categories = menuCategories
+                    categoriesRecyclerViewAdapter.notifyDataSetChanged()
                 }
                 Resource.Status.ERROR -> {
                     Toast.makeText(this, getString(R.string.loadingCategoriesError), Toast.LENGTH_LONG).show()
@@ -102,14 +125,23 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             super.onBackPressed()
     }
 
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        postsListFragment.onSetCategory(item.itemId)
+    override fun onClickMenuCategory(category: MenuCategory) {
+        postsListFragment.onSetCategory(category.id)
         drawerLayout.closeDrawer(GravityCompat.START)
-        return true
     }
 
     override fun onClickPost(post: PostBO) {
         val bundle = Bundle()
+        var color = CategoryColor.DEFAULT_COLOR
+
+        for (category in menuCategoriesList) {
+            if (post.categories.isNotEmpty() && category.id == post.categories[0].id) {
+                color = category.color
+                break
+            }
+        }
+
+        bundle.putInt("COLOR", color)
         bundle.putParcelable("POST", post)
 
         val postDetailFragment = PostDetailFragment()

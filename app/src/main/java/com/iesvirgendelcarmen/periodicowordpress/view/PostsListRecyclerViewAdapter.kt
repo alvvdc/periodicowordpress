@@ -1,6 +1,6 @@
 package com.iesvirgendelcarmen.periodicowordpress.view
 
-import android.content.Intent
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.text.Html
 import android.view.LayoutInflater
@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -15,11 +16,18 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
+import com.iesvirgendelcarmen.periodicowordpress.config.CategoryColor
+import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCategory
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import java.text.DateFormatSymbols
 import java.util.*
 
-class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var sharePostListener: SharePostListener, var postsList: MutableList<PostBO> = mutableListOf()): RecyclerView.Adapter<PostsListRecyclerViewAdapter.PostViewHolder>() {
+class PostsListRecyclerViewAdapter(
+    val postListListener: PostListListener,
+    var sharePostListener: SharePostListener,
+    var postsList: MutableList<PostBO> = mutableListOf(),
+    var menuCategoriesList: List<MenuCategory> = emptyList()
+): RecyclerView.Adapter<PostsListRecyclerViewAdapter.PostViewHolder>() {
 
     override fun getItemCount(): Int {
         return postsList.size
@@ -38,11 +46,12 @@ class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var s
     inner class PostViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
 
         private val title = itemView.findViewById<TextView>(R.id.title)
-        private val category = itemView.findViewById<TextView>(R.id.category)
+        private val category = itemView.findViewById<TextView>(R.id.name)
         private val date = itemView.findViewById<TextView>(R.id.date)
         private val image = itemView.findViewById<ConstraintLayout>(R.id.cardConstraintLayout)
         private val dateIcon = itemView.findViewById<ImageView>(R.id.dateIcon)
         private val share = itemView.findViewById<ImageView>(R.id.share)
+        private val categoryCardView = itemView.findViewById<CardView>(R.id.categoryCardView)
 
         fun bind(post: PostBO) {
             bindComponents(post)
@@ -50,6 +59,15 @@ class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var s
             loadFeatureImage(post)
             setOnClickListener(post)
             setOnShareListener(post)
+
+            categoryCardView.setCardBackgroundColor(CategoryColor.DEFAULT_COLOR)
+
+            for (menuCategory in menuCategoriesList) {
+                if (post.categories.isNotEmpty() && menuCategory.id == post.categories[0].id) {
+                    categoryCardView.setCardBackgroundColor(menuCategory.color)
+                    break
+                }
+            }
         }
 
         private fun setOnShareListener(post: PostBO) {
@@ -62,13 +80,8 @@ class PostsListRecyclerViewAdapter(val postListListener: PostListListener, var s
             title.text = Html.fromHtml(post.title.rendered)
             image.background = null
 
-            category.text =
-                if (post.categories.size > 1 && post.categories[0].name.toLowerCase() != "uncategorized")
-                    post.categories[1].name.toUpperCase()
-                else if (post.categories.isNotEmpty())
-                    post.categories[0].name.toUpperCase()
-                else
-                    "OTROS"
+            category.text = if (post.categories.isNotEmpty()) post.categories[0].name.toUpperCase()
+                            else "OTROS"
         }
 
         private fun setDate(post: PostBO) {

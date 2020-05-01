@@ -19,11 +19,12 @@ import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
 import com.iesvirgendelcarmen.periodicowordpress.config.Endpoint
 import com.iesvirgendelcarmen.periodicowordpress.model.Resource
+import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCategory
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PostBoViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.PostViewModel
 
-class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, SetCategoryListener {
+class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, SetCategoryListener, CategoryLoadListener {
 
     private val viewModel by lazy {
         ViewModelProvider(this).get(PostBoViewModel::class.java)
@@ -131,6 +132,10 @@ class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, SetC
         paginationStatus.reset()
         viewModel.getPosts(paginationStatus.page, paginationStatus.category)
     }
+
+    override fun onCategoriesLoaded(categories: List<MenuCategory>) {
+        postsListRecyclerViewAdapter.menuCategoriesList = categories
+    }
 }
 
 class PostsListRecyclerViewOnScrollListener(private val callback: LoadMoreListener): RecyclerView.OnScrollListener() {
@@ -152,6 +157,10 @@ class PostsListRecyclerViewOnScrollListener(private val callback: LoadMoreListen
 
 interface SetCategoryListener {
     fun onSetCategory(categoryId: Int)
+}
+
+interface CategoryLoadListener {
+    fun onCategoriesLoaded(categories: List<MenuCategory>)
 }
 
 private class NpaLinearLayoutManager(context: Context?) : LinearLayoutManager(context) {

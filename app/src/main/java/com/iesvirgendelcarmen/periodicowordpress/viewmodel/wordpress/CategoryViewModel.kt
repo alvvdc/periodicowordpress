@@ -41,6 +41,6 @@ class CategoryViewModel: ViewModel() {
                 categoryListLiveData.value = Resource.loading(emptyList())
             }
 
-        }, 1, 20)
+        }, 1, 19)
     }
 }
