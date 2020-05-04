@@ -21,16 +21,16 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.navigation.NavigationView
 import com.iesvirgendelcarmen.periodicowordpress.config.CategoryColor
 import com.iesvirgendelcarmen.periodicowordpress.model.Resource
+import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MediaBO
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCategory
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCategoryMapper
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
-import com.iesvirgendelcarmen.periodicowordpress.view.PostDetailFragment
-import com.iesvirgendelcarmen.periodicowordpress.view.PostListListener
-import com.iesvirgendelcarmen.periodicowordpress.view.PostsListFragment
+import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.Media
+import com.iesvirgendelcarmen.periodicowordpress.view.*
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.CategoryViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener, SharePostListener {
+class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener, SharePostListener, ImageDetailListener, CloseFragmentListener {
 
     private val categoryViewModel by lazy {
         ViewModelProvider(this).get(CategoryViewModel::class.java)
@@ -164,8 +164,29 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
         val shareIntent = Intent.createChooser(sendIntent, null)
         startActivity(shareIntent)
     }
+
+    override fun onImageClickListener(media: MediaBO) {
+        val bundle = Bundle()
+        bundle.putParcelable("MEDIA", media)
+
+        val imageDetailFragment = ImageDetailFragment()
+        imageDetailFragment.arguments = bundle
+
+        supportFragmentManager.beginTransaction()
+            .add(R.id.container, imageDetailFragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    override fun onClickCloseFragment() {
+        supportFragmentManager.popBackStack()
+    }
 }
 
 interface SharePostListener {
     fun onClickSharePost(post: PostBO)
+}
+
+interface CloseFragmentListener {
+    fun onClickCloseFragment()
 }

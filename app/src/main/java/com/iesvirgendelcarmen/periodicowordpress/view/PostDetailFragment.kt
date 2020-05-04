@@ -20,7 +20,9 @@ import com.bumptech.glide.request.transition.Transition
 import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
 import com.iesvirgendelcarmen.periodicowordpress.config.CategoryColor
+import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MediaBO
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
+import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.Media
 import java.text.DateFormatSymbols
 import java.util.*
 
@@ -39,8 +41,10 @@ class PostDetailFragment : Fragment() {
     private lateinit var contentTextView: TextView
     private lateinit var readTimeTextView: TextView
     private lateinit var categoryCardView: CardView
+    private lateinit var featuredMediaDescription: TextView
 
     private lateinit var sharePostListener: SharePostListener
+    private lateinit var imageDetailListener: ImageDetailListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +55,7 @@ class PostDetailFragment : Fragment() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         sharePostListener = context as SharePostListener
+        imageDetailListener = context as ImageDetailListener
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -69,6 +74,10 @@ class PostDetailFragment : Fragment() {
 
         categoryCardView = view.findViewById(R.id.actionBar)
         categoryCardView.setCardBackgroundColor(categoryColor)
+
+        featuredImageConstraintLayout.setOnClickListener {
+            imageDetailListener.onImageClickListener(post.featuredMedia)
+        }
     }
 
     private fun setOnShareListener() {
@@ -102,8 +111,15 @@ class PostDetailFragment : Fragment() {
     private fun bindTextViews() {
         categoryTextView.text = post.categories[0].name.toUpperCase()
         titleTextView.text = Html.fromHtml(post.title.rendered)
-
         contentTextView.text = Html.fromHtml(post.content.rendered)
+
+//        if (post.featuredMedia.caption.rendered.isBlank()) {
+//            featuredMediaDescription.text = ""
+//            featuredMediaDescription.setBackgroundColor(Color.parseColor("#00000000"))
+//        } else {
+            featuredMediaDescription.text = "Foto de ${post.featuredMedia.author.name}".toUpperCase()
+            featuredMediaDescription.setBackgroundColor(Color.parseColor("#B3000000"))
+        //}
     }
 
     private fun setReadTime() {
@@ -148,6 +164,7 @@ class PostDetailFragment : Fragment() {
         dateImageView = view.findViewById(R.id.dateIcon)
         contentTextView = view.findViewById(R.id.content)
         readTimeTextView = view.findViewById(R.id.readTime)
+        featuredMediaDescription = view.findViewById(R.id.featuredMediaDescription)
     }
 
     private fun getPostFromParcelable() {
@@ -161,4 +178,8 @@ class PostDetailFragment : Fragment() {
             categoryColor = arguments?.getInt("COLOR") ?: CategoryColor.DEFAULT_COLOR
         }
     }
+}
+
+interface ImageDetailListener {
+    fun onImageClickListener(media :MediaBO)
 }

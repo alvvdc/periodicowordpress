@@ -15,6 +15,6 @@ data class PostBO(
     var title: Rendered = Rendered(""),
     var content: RenderedProtected = RenderedProtected("", ""),
     var author: User = User(-1, "", "", "", "", AvatarUrls("", "", "")),
-    var featuredMedia: Media = Media(-1, Date(), Date(), "", Rendered(""), -1, Rendered(""), Rendered(""), "", "", "", MediaDetails(-1, -1, "", Sizes()), -1, ""),
+    var featuredMedia: MediaBO = MediaBO(-1, Date(), Date(), "", Rendered(""), User(-1, "", "", "", "", AvatarUrls("", "", "")), Rendered(""), Rendered(""), "", "", "", MediaDetails(-1, -1, "", Sizes()), -1, ""),
     var categories: List<Category> = emptyList()
 ): Parcelable

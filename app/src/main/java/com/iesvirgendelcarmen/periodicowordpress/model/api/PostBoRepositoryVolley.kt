@@ -8,6 +8,7 @@ import com.google.gson.reflect.TypeToken
 import com.iesvirgendelcarmen.periodicowordpress.config.Endpoint
 import com.iesvirgendelcarmen.periodicowordpress.model.GsonSingleton
 import com.iesvirgendelcarmen.periodicowordpress.model.VolleySingleton
+import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MediaMapper
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostMapper
 import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.*
@@ -19,7 +20,8 @@ object PostBoRepositoryVolley {
 
         getPostById(id, object: ObjectsRequest {
             override fun onCompleted(postBoObjects: PostBoObjects) {
-                val postBO = PostMapper.transformDTOtoBO(postBoObjects.post, postBoObjects.media!!, postBoObjects.author!!, postBoObjects.categories!!)
+                val mediaBO = MediaMapper.transformDTOtoBO(postBoObjects.media!!, postBoObjects.mediaAuthor!!)
+                val postBO = PostMapper.transformDTOtoBO(postBoObjects.post, mediaBO, postBoObjects.author!!, postBoObjects.categories!!)
                 callback.onResponse(postBO)
             }
 
@@ -90,7 +92,8 @@ object PostBoRepositoryVolley {
                     getPostAdditionalObjects(PostBoObjects(post), object: ObjectsRequest {
                         override fun onCompleted(postBoObjects: PostBoObjects) {
 
-                            val postBO = PostMapper.transformDTOtoBO(postBoObjects.post, postBoObjects.media!!, postBoObjects.author!!, postBoObjects.categories!!)
+                            val mediaBO = MediaMapper.transformDTOtoBO(postBoObjects.media!!, postBoObjects.mediaAuthor!!)
+                            val postBO = PostMapper.transformDTOtoBO(postBoObjects.post, mediaBO, postBoObjects.author!!, postBoObjects.categories!!)
                             postsBO.add(postBO)
 
                             if (postsBO.size >= posts.size) {
@@ -174,6 +177,7 @@ object PostBoRepositoryVolley {
                 Response.Listener
                 {
                     postBoObjects.media = GsonSingleton.getInstance().fromJson<Media>(it, Media::class.java)
+                    requestMediaAuthorObject(postBoObjects, callback)
                     sendPostObjects(postBoObjects, callback)
                 },
                 Response.ErrorListener {
@@ -187,6 +191,23 @@ object PostBoRepositoryVolley {
             postBoObjects.media = Media(-1, Date(), Date(), "", Rendered(""), -1, Rendered(""), Rendered(""), "", "", "", MediaDetails(-1, -1, "", Sizes()), -1, "")
             sendPostObjects(postBoObjects, callback)
         }
+    }
+
+    private fun requestMediaAuthorObject(postBoObjects: PostBoObjects, callback: ObjectsRequest) {
+        VolleySingleton.getInstance().requestQueue
+
+        val stringRequestMediaAuthor = StringRequest(
+            Request.Method.GET,
+            "${Endpoint.USERS_URL}${postBoObjects.media?.author}",
+            Response.Listener {
+                postBoObjects.mediaAuthor = GsonSingleton.getInstance().fromJson(it, User::class.java)
+                sendPostObjects(postBoObjects, callback)
+            },
+            Response.ErrorListener {
+                callback.onError("Media Author Error: " + it.message + " ${it.networkResponse.statusCode}  ${it.networkResponse.data.toString()}")
+            }
+        )
+        VolleySingleton.getInstance().addToRequestQueue(stringRequestMediaAuthor)
     }
 
     private fun sendPostObjects(postBoObjects: PostBoObjects, callback: ObjectsRequest) {
@@ -204,8 +225,9 @@ object PostBoRepositoryVolley {
         var post: Post,
         var media: Media? = null,
         var author: User? = null,
-        var categories: List<Category>? = null
+        var categories: List<Category>? = null,
+        var mediaAuthor: User? = null
     ) {
-        fun isPostCompleted() = post != null && media != null && author != null && categories != null
+        fun isPostCompleted() = post != null && media != null && author != null && categories != null && mediaAuthor != null
     }
 }
