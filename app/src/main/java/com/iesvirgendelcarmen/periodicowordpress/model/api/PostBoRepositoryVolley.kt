@@ -189,6 +189,7 @@ object PostBoRepositoryVolley {
         else
         {
             postBoObjects.media = Media(-1, Date(), Date(), "", Rendered(""), -1, Rendered(""), Rendered(""), "", "", "", MediaDetails(-1, -1, "", Sizes()), -1, "")
+            postBoObjects.mediaAuthor = User(-1, "", "", "", "", AvatarUrls("", "", ""))
             sendPostObjects(postBoObjects, callback)
         }
     }
