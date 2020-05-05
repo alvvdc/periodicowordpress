@@ -3,14 +3,13 @@ package com.iesvirgendelcarmen.periodicowordpress.view
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.Drawable
-import android.opengl.Visibility
 import android.os.Bundle
 import android.text.Html
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
@@ -24,7 +23,6 @@ import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
 import com.iesvirgendelcarmen.periodicowordpress.config.CategoryColor
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MediaBO
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
-import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.Media
 import java.text.DateFormatSymbols
 import java.util.*
 
@@ -44,6 +42,8 @@ class PostDetailFragment : Fragment() {
     private lateinit var readTimeTextView: TextView
     private lateinit var categoryCardView: CardView
     private lateinit var featuredMediaDescription: TextView
+    private lateinit var shareButton: Button
+    private lateinit var bookmarkButton: Button
 
     private lateinit var sharePostListener: SharePostListener
     private lateinit var imageDetailListener: ImageDetailListener
@@ -83,9 +83,10 @@ class PostDetailFragment : Fragment() {
     }
 
     private fun setOnShareListener() {
-        shareImageView.setOnClickListener {
-            sharePostListener.onClickSharePost(post)
-        }
+        val shareClickListener = View.OnClickListener { sharePostListener.onClickSharePost(post) }
+
+        shareImageView.setOnClickListener(shareClickListener)
+        shareButton.setOnClickListener(shareClickListener)
     }
 
     private fun setDate(view: View) {
@@ -172,6 +173,8 @@ class PostDetailFragment : Fragment() {
         contentTextView = view.findViewById(R.id.content)
         readTimeTextView = view.findViewById(R.id.readTime)
         featuredMediaDescription = view.findViewById(R.id.featuredMediaDescription)
+        shareButton = view.findViewById(R.id.shareButton)
+        bookmarkButton = view.findViewById(R.id.bookmarkButton)
     }
 
     private fun getPostFromParcelable() {
