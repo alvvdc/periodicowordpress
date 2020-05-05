@@ -181,7 +181,11 @@ object PostBoRepositoryVolley {
                     sendPostObjects(postBoObjects, callback)
                 },
                 Response.ErrorListener {
-                    callback.onError("Media Error: " + it.message + " ${it.networkResponse.statusCode}  ${it.networkResponse.data.toString()}")
+                    //callback.onError("Media Error: " + it.message + " ${it.networkResponse.statusCode}  ${it.networkResponse.data.toString()}")
+                    postBoObjects.media = Media(-1, Date(), Date(), "", Rendered(""), -1, Rendered(""), Rendered(""), "", "", "", MediaDetails(-1, -1, "", Sizes()), -1, "")
+                    postBoObjects.mediaAuthor = User(-1, "", "", "", "", AvatarUrls("", "", ""))
+                    sendPostObjects(postBoObjects, callback)
+                    //Log.d("ALVARO", "Media Error: " + it.message + " ${it.networkResponse.statusCode}  ${it.networkResponse.data.toString()}")
                 }
             )
             VolleySingleton.getInstance().addToRequestQueue(stringRequestMedia)
@@ -205,7 +209,10 @@ object PostBoRepositoryVolley {
                 sendPostObjects(postBoObjects, callback)
             },
             Response.ErrorListener {
-                callback.onError("Media Author Error: " + it.message + " ${it.networkResponse.statusCode}  ${it.networkResponse.data.toString()}")
+                //callback.onError("Media Author Error: " + it.message + " ${it.networkResponse.statusCode}  ${it.networkResponse.data.toString()}")
+                postBoObjects.mediaAuthor = User(-1, "Desconocido", "", "", "", AvatarUrls("", "", ""))
+                sendPostObjects(postBoObjects, callback)
+                //Log.d("ALVARO", "Media Author Error: " + it.message + " ${it.networkResponse.statusCode}  ${it.networkResponse.data.toString()}")
             }
         )
         VolleySingleton.getInstance().addToRequestQueue(stringRequestMediaAuthor)
