@@ -3,8 +3,10 @@ package com.iesvirgendelcarmen.periodicowordpress.view
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.Drawable
+import android.opengl.Visibility
 import android.os.Bundle
 import android.text.Html
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -131,27 +133,32 @@ class PostDetailFragment : Fragment() {
     private fun loadFeatureImage(view: View) {
         val mainUrlToLoad = post.featuredMedia.sourceUrl
 
-        Glide.with(view)
-            .load(mainUrlToLoad)
-            .placeholder(null)
-            .override(1024, 768)
-            .thumbnail(
-                Glide.with(view)
-                    .load(post.featuredMedia.mediaDetails.sizes.thumbnail?.sourceUrl)
-                    .placeholder(null)
-            )
-            .into(object : CustomTarget<Drawable>() {
-                override fun onResourceReady(
-                    resource: Drawable,
-                    transition: Transition<in Drawable>?
-                ) {
-                    featuredImageConstraintLayout.background = resource
-                }
+        if (mainUrlToLoad == "") {
+            featuredImageConstraintLayout.visibility = View.GONE
+        } else {
 
-                override fun onLoadCleared(placeholder: Drawable?) {
+            Glide.with(view)
+                .load(mainUrlToLoad)
+                .placeholder(null)
+                .override(1024, 768)
+                .thumbnail(
+                    Glide.with(view)
+                        .load(post.featuredMedia.mediaDetails.sizes.thumbnail?.sourceUrl)
+                        .placeholder(null)
+                )
+                .into(object : CustomTarget<Drawable>() {
+                    override fun onResourceReady(
+                        resource: Drawable,
+                        transition: Transition<in Drawable>?
+                    ) {
+                        featuredImageConstraintLayout.background = resource
+                    }
 
-                }
-            })
+                    override fun onLoadCleared(placeholder: Drawable?) {
+
+                    }
+                })
+        }
     }
 
     private fun findViewsById(view: View) {
