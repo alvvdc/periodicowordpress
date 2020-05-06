@@ -10,6 +10,7 @@ import android.util.Log
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
@@ -25,8 +26,10 @@ import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MediaBO
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCategory
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCategoryMapper
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
+import com.iesvirgendelcarmen.periodicowordpress.model.room.Bookmark
 import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.Media
 import com.iesvirgendelcarmen.periodicowordpress.view.*
+import com.iesvirgendelcarmen.periodicowordpress.viewmodel.BookmarkViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.CategoryViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -36,7 +39,11 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
         ViewModelProvider(this).get(CategoryViewModel::class.java)
     }
 
-    private val bookmarks = mutableListOf<Int>()
+    private val bookmarkViewModel by lazy {
+        ViewModelProvider(this).get(BookmarkViewModel::class.java)
+    }
+
+    private var bookmarks = mutableListOf<Bookmark>()
 
     lateinit var postsListFragment: PostsListFragment
     lateinit var categoriesRecyclerView: RecyclerView
@@ -74,6 +81,10 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
 
         categoriesRecyclerViewAdapter = CategoriesRecyclerViewAdapter(emptyList(), this)
         categoriesRecyclerView.adapter = categoriesRecyclerViewAdapter
+
+        bookmarkViewModel.getAll().observe(this, Observer {
+            bookmarks = it.toMutableList()
+        })
     }
 
     private fun addCategoriesToNavigationDrawer() {
@@ -168,18 +179,24 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
     }
 
     override fun onBookmarkPost(post: PostBO): Boolean {
-        postsListFragment.onNotifyListForBookmark(post)
+        val bookmark = Bookmark(post.id)
 
-        if (bookmarks.contains(post.id)) {
-            bookmarks.remove(post.id)
+        if (bookmarks.contains(bookmark)) {
+            bookmarkViewModel.remove(bookmark)
+
+            if (bookmarks.contains(bookmark)) bookmarks.remove(bookmark)
+            postsListFragment.onNotifyListForBookmark(post)
             return false
         } else {
-            bookmarks.add(post.id)
+            bookmarkViewModel.add(bookmark)
+            
+            if (!bookmarks.contains(bookmark)) bookmarks.add(bookmark)
+            postsListFragment.onNotifyListForBookmark(post)
             return true
         }
     }
 
-    override fun isPostBookmarked(post: PostBO) = bookmarks.contains(post.id)
+    override fun isPostBookmarked(post: PostBO) = bookmarks.contains(Bookmark(post.id))
 
     override fun onImageClickListener(media: MediaBO) {
         val bundle = Bundle()
