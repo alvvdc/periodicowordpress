@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Html
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -17,6 +18,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.iesvirgendelcarmen.periodicowordpress.BookmarkPostListener
 
 import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
@@ -46,6 +48,8 @@ class PostDetailFragment : Fragment() {
     private lateinit var bookmarkButton: Button
 
     private lateinit var sharePostListener: SharePostListener
+    private lateinit var bookmarkPostListener: BookmarkPostListener
+    private lateinit var notifyBookmarkNotifyList: BookmarkNotifyList
     private lateinit var imageDetailListener: ImageDetailListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,6 +61,7 @@ class PostDetailFragment : Fragment() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         sharePostListener = context as SharePostListener
+        bookmarkPostListener = context as BookmarkPostListener
         imageDetailListener = context as ImageDetailListener
     }
 
@@ -73,6 +78,7 @@ class PostDetailFragment : Fragment() {
         setDate(view)
         loadFeatureImage(view)
         setOnShareListener()
+        setBookmarks()
 
         categoryCardView = view.findViewById(R.id.actionBar)
         categoryCardView.setCardBackgroundColor(categoryColor)
@@ -80,6 +86,40 @@ class PostDetailFragment : Fragment() {
         featuredImageConstraintLayout.setOnClickListener {
             imageDetailListener.onImageClickListener(post.featuredMedia)
         }
+    }
+
+    private fun setBookmarks() {
+        if (bookmarkPostListener.isPostBookmarked(post)) setImageBookmarked()
+        else setImageNonBookmarked()
+
+        val bookmarkOnClickListener = View.OnClickListener {
+            val bookmarked = bookmarkPostListener.onBookmarkPost(post)
+            if (bookmarked) setImageBookmarked()
+            else setImageNonBookmarked()
+        }
+
+        bookmarkImageView.setOnClickListener(bookmarkOnClickListener)
+        bookmarkButton.setOnClickListener(bookmarkOnClickListener)
+    }
+
+    private fun setImageNonBookmarked() {
+        bookmarkImageView.setImageResource(R.drawable.ic_bookmark_border_white)
+        bookmarkButton.setCompoundDrawablesWithIntrinsicBounds(
+            R.drawable.ic_bookmark_border_black,
+            0,
+            0,
+            0
+        )
+    }
+
+    private fun setImageBookmarked() {
+        bookmarkImageView.setImageResource(R.drawable.ic_bookmark_white)
+        bookmarkButton.setCompoundDrawablesWithIntrinsicBounds(
+            R.drawable.ic_bookmark_black,
+            0,
+            0,
+            0
+        )
     }
 
     private fun setOnShareListener() {

@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.iesvirgendelcarmen.periodicowordpress.BookmarkPostListener
 import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
 import com.iesvirgendelcarmen.periodicowordpress.config.CategoryColor
@@ -25,6 +26,7 @@ import java.util.*
 class PostsListRecyclerViewAdapter(
     val postListListener: PostListListener,
     var sharePostListener: SharePostListener,
+    var bookmarkPostListener: BookmarkPostListener,
     var postsList: MutableList<PostBO> = mutableListOf(),
     var menuCategoriesList: List<MenuCategory> = emptyList()
 ): RecyclerView.Adapter<PostsListRecyclerViewAdapter.PostViewHolder>() {
@@ -51,14 +53,42 @@ class PostsListRecyclerViewAdapter(
         private val image = itemView.findViewById<ConstraintLayout>(R.id.cardConstraintLayout)
         private val dateIcon = itemView.findViewById<ImageView>(R.id.dateIcon)
         private val share = itemView.findViewById<ImageView>(R.id.share)
+        private val bookmark = itemView.findViewById<ImageView>(R.id.bookmark)
         private val categoryCardView = itemView.findViewById<CardView>(R.id.categoryCardView)
 
         fun bind(post: PostBO) {
             bindComponents(post)
             setDate(post)
+            setCategory(post)
+            setBookmarks(post)
             loadFeatureImage(post)
             setOnClickListener(post)
             setOnShareListener(post)
+        }
+
+        private fun setBookmarks(post: PostBO) {
+            if (bookmarkPostListener.isPostBookmarked(post)) setImageBookmarked()
+            else setImageNonBookmarked()
+
+            bookmark.setOnClickListener {
+                val bookmarked = bookmarkPostListener.onBookmarkPost(post)
+                if (bookmarked) setImageBookmarked()
+                else setImageNonBookmarked()
+            }
+        }
+
+        private fun setImageNonBookmarked() {
+            bookmark.setImageResource(R.drawable.ic_bookmark_border_white)
+        }
+
+        private fun setImageBookmarked() {
+            bookmark.setImageResource(R.drawable.ic_bookmark_white)
+        }
+
+        private fun setCategory(post: PostBO) {
+            category.text = if (post.categories.isNotEmpty()) post.categories[0].name.toUpperCase()
+                else "OTROS"
+
 
             categoryCardView.setCardBackgroundColor(CategoryColor.DEFAULT_COLOR)
 
@@ -79,9 +109,6 @@ class PostsListRecyclerViewAdapter(
         private fun bindComponents(post: PostBO) {
             title.text = Html.fromHtml(post.title.rendered)
             image.background = null
-
-            category.text = if (post.categories.isNotEmpty()) post.categories[0].name.toUpperCase()
-                            else "OTROS"
         }
 
         private fun setDate(post: PostBO) {

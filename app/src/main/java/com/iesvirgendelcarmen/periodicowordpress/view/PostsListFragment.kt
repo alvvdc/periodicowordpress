@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.iesvirgendelcarmen.periodicowordpress.BookmarkPostListener
 import com.iesvirgendelcarmen.periodicowordpress.MainActivity
 
 import com.iesvirgendelcarmen.periodicowordpress.R
@@ -24,7 +25,7 @@ import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PostBoViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.PostViewModel
 
-class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, SetCategoryListener, CategoryLoadListener {
+class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, SetCategoryListener, CategoryLoadListener, BookmarkNotifyList {
 
     private val viewModel by lazy {
         ViewModelProvider(this).get(PostBoViewModel::class.java)
@@ -36,6 +37,7 @@ class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, SetC
     private lateinit var postsListRecyclerViewOnScrollListener: PostsListRecyclerViewOnScrollListener
     private lateinit var postListListener: PostListListener
     private lateinit var sharePostListener: SharePostListener
+    private lateinit var bookmarkPostListener: BookmarkPostListener
 
     val paginationStatus = PaginationStatus()
 
@@ -51,11 +53,12 @@ class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, SetC
         super.onAttach(context)
         postListListener = context as PostListListener
         sharePostListener = context as SharePostListener
+        bookmarkPostListener = context as BookmarkPostListener
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
-        postsListRecyclerViewAdapter = PostsListRecyclerViewAdapter(postListListener, sharePostListener)
+        postsListRecyclerViewAdapter = PostsListRecyclerViewAdapter(postListListener, sharePostListener, bookmarkPostListener)
         val linearLayoutManager = NpaLinearLayoutManager(context)
 
         recyclerView.apply {
@@ -136,6 +139,11 @@ class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, SetC
     override fun onCategoriesLoaded(categories: List<MenuCategory>) {
         postsListRecyclerViewAdapter.menuCategoriesList = categories
     }
+
+    override fun onNotifyListForBookmark(post: PostBO) {
+        val index = postsListRecyclerViewAdapter.postsList.indexOf(post)
+        postsListRecyclerViewAdapter.notifyItemChanged(index)
+    }
 }
 
 class PostsListRecyclerViewOnScrollListener(private val callback: LoadMoreListener): RecyclerView.OnScrollListener() {
@@ -161,6 +169,10 @@ interface SetCategoryListener {
 
 interface CategoryLoadListener {
     fun onCategoriesLoaded(categories: List<MenuCategory>)
+}
+
+interface BookmarkNotifyList {
+    fun onNotifyListForBookmark(post: PostBO)
 }
 
 private class NpaLinearLayoutManager(context: Context?) : LinearLayoutManager(context) {

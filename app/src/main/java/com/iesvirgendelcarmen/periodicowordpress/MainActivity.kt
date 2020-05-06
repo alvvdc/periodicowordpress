@@ -30,11 +30,13 @@ import com.iesvirgendelcarmen.periodicowordpress.view.*
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.CategoryViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener, SharePostListener, ImageDetailListener, CloseFragmentListener {
+class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener, SharePostListener, BookmarkPostListener, ImageDetailListener, CloseFragmentListener {
 
     private val categoryViewModel by lazy {
         ViewModelProvider(this).get(CategoryViewModel::class.java)
     }
+
+    private val bookmarks = mutableListOf<Int>()
 
     lateinit var postsListFragment: PostsListFragment
     lateinit var categoriesRecyclerView: RecyclerView
@@ -165,6 +167,20 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
         startActivity(shareIntent)
     }
 
+    override fun onBookmarkPost(post: PostBO): Boolean {
+        postsListFragment.onNotifyListForBookmark(post)
+
+        if (bookmarks.contains(post.id)) {
+            bookmarks.remove(post.id)
+            return false
+        } else {
+            bookmarks.add(post.id)
+            return true
+        }
+    }
+
+    override fun isPostBookmarked(post: PostBO) = bookmarks.contains(post.id)
+
     override fun onImageClickListener(media: MediaBO) {
         val bundle = Bundle()
         bundle.putParcelable("MEDIA", media)
@@ -185,6 +201,11 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
 
 interface SharePostListener {
     fun onClickSharePost(post: PostBO)
+}
+
+interface BookmarkPostListener {
+    fun onBookmarkPost(post: PostBO): Boolean
+    fun isPostBookmarked(post: PostBO): Boolean
 }
 
 interface CloseFragmentListener {
