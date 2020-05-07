@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -13,6 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.iesvirgendelcarmen.periodicowordpress.BookmarkPostListener
 import com.iesvirgendelcarmen.periodicowordpress.MainActivity
 
@@ -25,13 +27,14 @@ import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PostBoViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.PostViewModel
 
-class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, SetCategoryListener, CategoryLoadListener, BookmarkNotifyList {
+class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, BottomNavigationView.OnNavigationItemSelectedListener, SetCategoryListener, CategoryLoadListener, BookmarkNotifyList {
 
     private val viewModel by lazy {
         ViewModelProvider(this).get(PostBoViewModel::class.java)
     }
 
     lateinit var swipeRefresh: SwipeRefreshLayout
+    private lateinit var bottomNavigation: BottomNavigationView
 
     private lateinit var postsListRecyclerViewAdapter: PostsListRecyclerViewAdapter
     private lateinit var postsListRecyclerViewOnScrollListener: PostsListRecyclerViewOnScrollListener
@@ -80,6 +83,9 @@ class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, SetC
 
         swipeRefresh = view.findViewById(R.id.swipeRefresh)
         swipeRefresh.setOnRefreshListener(this)
+
+        bottomNavigation = view.findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        bottomNavigation.setOnNavigationItemSelectedListener(this)
     }
 
     override fun onStart() {
@@ -107,6 +113,24 @@ class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, SetC
             swipeRefresh.isRefreshing = true
             viewModel.getPosts()
         }
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.home -> {
+                Toast.makeText(context, "HOME", Toast.LENGTH_SHORT).show()
+                return true
+            }
+            R.id.trending -> {
+                Toast.makeText(context, "TRENDING", Toast.LENGTH_SHORT).show()
+                return true
+            }
+            R.id.bookmark -> {
+                Toast.makeText(context, "BOOKMARK", Toast.LENGTH_SHORT).show()
+                return true
+            }
+        }
+        return false
     }
 
     data class PaginationStatus(var isLoading: Boolean = false, var page: Int = 1, var isListEnded: Boolean = false, var category: Int = -1) {
