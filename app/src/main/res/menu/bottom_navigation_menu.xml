@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/home"
+        android:enabled="true"
+        android:icon="@drawable/ic_home_black_18dp"
+        android:title="Inicio"/>
+    <item
+        android:id="@+id/trending"
+        android:enabled="true"
+        android:icon="@drawable/ic_trending_up_black_18dp"
+        android:title="Los más vistos"/>
+
+    <item
+        android:id="@+id/bookmark"
+        android:enabled="true"
+        android:icon="@drawable/ic_bookmark_black"
+        android:title="Marcadores"/>
+</menu>
