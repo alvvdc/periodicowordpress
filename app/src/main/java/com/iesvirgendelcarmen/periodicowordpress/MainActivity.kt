@@ -1,16 +1,9 @@
 package com.iesvirgendelcarmen.periodicowordpress
 
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.ColorFilter
-import android.graphics.PorterDuff
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
-import android.view.Gravity
-import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
@@ -19,7 +12,6 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.navigation.NavigationView
 import com.iesvirgendelcarmen.periodicowordpress.config.CategoryColor
 import com.iesvirgendelcarmen.periodicowordpress.model.Resource
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MediaBO
@@ -27,15 +19,20 @@ import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCatego
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCategoryMapper
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.model.room.Bookmark
-import com.iesvirgendelcarmen.periodicowordpress.model.room.BookmarkList
-import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.Media
 import com.iesvirgendelcarmen.periodicowordpress.view.*
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.BookmarkViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.CategoryViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_posts_list.*
 
-class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener, SharePostListener, BookmarkPostListener, ImageDetailListener, CloseFragmentListener, BottomNavigationListener {
+class MainActivity :    AppCompatActivity(),
+                        MenuCategoryListener,
+                        PostListListener,
+                        SharePostListener,
+                        BookmarkPostListener,
+                        ImageDetailListener,
+                        CloseFragmentListener,
+                        BottomNavigationListener {
 
     private val categoryViewModel by lazy {
         ViewModelProvider(this).get(CategoryViewModel::class.java)
@@ -55,6 +52,12 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
 
     lateinit var menuCategoriesList: List<MenuCategory>
 
+    companion object {
+        val STATUS_KEY = "STATUS"
+        val LOAD_HOME = 0
+        val LOAD_BOOKMARKS = 1
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -69,7 +72,11 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
 
         addCategoriesToNavigationDrawer()
 
+        val bundle = Bundle()
+        bundle.putInt(STATUS_KEY, LOAD_HOME)
+
         postsListFragment = PostsListFragment()
+        postsListFragment.arguments = bundle
 
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction().add(
@@ -83,6 +90,10 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
 
         categoriesRecyclerViewAdapter = CategoriesRecyclerViewAdapter(emptyList(), this)
         categoriesRecyclerView.adapter = categoriesRecyclerViewAdapter
+    }
+
+    override fun onStart() {
+        super.onStart()
 
         bookmarkViewModel.getAll().observe(this, Observer {
             bookmarks = it.toMutableList()
@@ -198,6 +209,7 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
             postsListFragment.onNotifyListForBookmark(post)
             return true
         }
+        return false
     }
 
     override fun isPostBookmarked(post: PostBO) = bookmarks.contains(Bookmark(post.id))
@@ -224,7 +236,7 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
             .replace(R.id.container, postsListFragment)
             .commit()
 
-        postsListFragment.bottomNavigation.menu.findItem(R.id.home).isChecked = true
+        this.postsListFragment.bottomNavigation.menu.findItem(R.id.home).isChecked = true
     }
 
     override fun onBottomNavigationTrendingSelected() {
@@ -233,17 +245,16 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
 
     override fun onBottomNavigationBookmarkSelected() {
         val bundle = Bundle()
-        bundle.putParcelable("BOOKMARKS", BookmarkList(bookmarks.toList()))
+        bundle.putInt(STATUS_KEY, LOAD_BOOKMARKS)
 
         val postsListFragment = PostsListFragment()
         postsListFragment.arguments = bundle
+        postsListFragment.onCategoriesLoaded(menuCategoriesList)
 
         supportFragmentManager.beginTransaction()
             .add(R.id.container, postsListFragment)
             .addToBackStack(null)
             .commit()
-
-        postsListFragment.onCategoriesLoaded(menuCategoriesList)
     }
 }
 

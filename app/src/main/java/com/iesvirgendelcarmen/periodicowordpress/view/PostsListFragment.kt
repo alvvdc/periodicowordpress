@@ -14,10 +14,10 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.iesvirgendelcarmen.periodicowordpress.BookmarkPostListener
+import com.iesvirgendelcarmen.periodicowordpress.MainActivity
 import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
 import com.iesvirgendelcarmen.periodicowordpress.config.Endpoint
@@ -26,6 +26,7 @@ import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCatego
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.model.room.Bookmark
 import com.iesvirgendelcarmen.periodicowordpress.model.room.BookmarkList
+import com.iesvirgendelcarmen.periodicowordpress.viewmodel.BookmarkViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PostBoViewModel
 
 
@@ -37,11 +38,16 @@ class PostsListFragment :   Fragment(),
                             BookmarkNotifyList,
                             Back {
 
-    private val viewModel by lazy {
+    private val postViewModel by lazy {
         ViewModelProvider(this).get(PostBoViewModel::class.java)
     }
 
-    private var bookmarks = listOf<Bookmark>()
+    private val bookmarkViewModel by lazy {
+        ViewModelProvider(this).get(BookmarkViewModel::class.java)
+    }
+
+    private var status = MainActivity.LOAD_HOME
+
     private var categories = emptyList<MenuCategory>()
 
     lateinit var swipeRefresh: SwipeRefreshLayout
@@ -58,11 +64,7 @@ class PostsListFragment :   Fragment(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val bookmarkList: BookmarkList? = arguments?.getParcelable("BOOKMARKS")
-        if (bookmarkList != null) {
-            bookmarks = bookmarkList.bookmarkList
-        }
+        this.status = arguments?.getInt(MainActivity.STATUS_KEY, MainActivity.LOAD_HOME)!!
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -94,7 +96,7 @@ class PostsListFragment :   Fragment(),
                     paginationStatus.nextPage()
                     swipeRefresh.isRefreshing = true
                     paginationStatus.isLoading = true
-                    viewModel.getPosts(paginationStatus.page, paginationStatus.category)
+                    postViewModel.getPosts(paginationStatus.page, paginationStatus.category)
                 }
             }
         })
@@ -112,7 +114,7 @@ class PostsListFragment :   Fragment(),
     override fun onStart() {
         super.onStart()
 
-        viewModel.postsBoListLiveData.observe(viewLifecycleOwner, Observer { resource ->
+        postViewModel.postsBoListLiveData.observe(viewLifecycleOwner, Observer { resource ->
             when (resource.status) {
                 Resource.Status.SUCCESS -> {
                     postsListRecyclerViewAdapter.postsList.addAll(resource.data)
@@ -131,17 +133,21 @@ class PostsListFragment :   Fragment(),
         })
 
         if (paginationStatus.page <= 1) {
-            Log.d("ALVARO", "page <= 1")
             swipeRefresh.isRefreshing = true
 
-            if (bookmarks.isEmpty()) {
-                Log.d("ALVARO", "isEmpty")
-                viewModel.getPosts()
-                bottomNavigation.checkItem(R.id.home)
-            }
-            else {
-                viewModel.getPosts(paginationStatus.page, paginationStatus.category, Bookmark.convertListToArray(bookmarks))
+            if (isBookmarkLoadEnabled())
+            {
+                val bookmarkLiveData = bookmarkViewModel.getAll()
+
+                bookmarkLiveData.observe(viewLifecycleOwner, Observer {
+                    postViewModel.getPosts(paginationStatus.page, paginationStatus.category, Bookmark.convertListToArray(it))
+                })
+
                 bottomNavigation.checkItem(R.id.bookmark)
+            }
+            else
+            {
+                postViewModel.getPosts()
             }
         }
     }
@@ -181,20 +187,20 @@ class PostsListFragment :   Fragment(),
 
         paginationStatus.reset()
         paginationStatus.category = categoryId
-        viewModel.getPosts(paginationStatus.page, paginationStatus.category)
+        postViewModel.getPosts(paginationStatus.page, paginationStatus.category)
     }
 
     override fun onRefresh() {
-        if (bookmarks.isEmpty()) {
-            postsListRecyclerViewAdapter.postsList = mutableListOf()
+        postsListRecyclerViewAdapter.postsList = mutableListOf()
 
-            paginationStatus.reset()
-            viewModel.getPosts(paginationStatus.page, paginationStatus.category)
-            bottomNavigation.checkItem(R.id.home)
+        paginationStatus.reset()
+
+        if (isBookmarkLoadEnabled()) {
+            bookmarkViewModel.getAll().observe(viewLifecycleOwner, Observer {
+                postViewModel.getPosts(paginationStatus.page, paginationStatus.category, Bookmark.convertListToArray(it))
+            })
         } else {
-            paginationStatus.reset()
-            viewModel.getPosts(paginationStatus.page, paginationStatus.category, Bookmark.convertListToArray(bookmarks))
-            bottomNavigation.checkItem(R.id.bookmark)
+            postViewModel.getPosts(paginationStatus.page, paginationStatus.category)
         }
     }
 
@@ -215,11 +221,11 @@ class PostsListFragment :   Fragment(),
     }
 
     override fun onBackPressed() {
-        if (bookmarks.isEmpty())
+        if (!isBookmarkLoadEnabled())
             bottomNavigation.checkItem(R.id.home)
-        //else
-            //bottomNavigation.checkItem(R.id.bookmark)
     }
+
+    private fun isBookmarkLoadEnabled() = status == MainActivity.LOAD_BOOKMARKS
 }
 
 class PostsListRecyclerViewOnScrollListener(private val callback: LoadMoreListener): RecyclerView.OnScrollListener() {
