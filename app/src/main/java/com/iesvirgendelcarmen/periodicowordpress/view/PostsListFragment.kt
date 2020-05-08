@@ -1,37 +1,48 @@
 package com.iesvirgendelcarmen.periodicowordpress.view
 
 import android.content.Context
+import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.iesvirgendelcarmen.periodicowordpress.BookmarkPostListener
-import com.iesvirgendelcarmen.periodicowordpress.MainActivity
-
 import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
 import com.iesvirgendelcarmen.periodicowordpress.config.Endpoint
 import com.iesvirgendelcarmen.periodicowordpress.model.Resource
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCategory
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
+import com.iesvirgendelcarmen.periodicowordpress.model.room.Bookmark
+import com.iesvirgendelcarmen.periodicowordpress.model.room.BookmarkList
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PostBoViewModel
-import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.PostViewModel
 
-class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, BottomNavigationView.OnNavigationItemSelectedListener, SetCategoryListener, CategoryLoadListener, BookmarkNotifyList {
+
+class PostsListFragment :   Fragment(),
+                            SwipeRefreshLayout.OnRefreshListener,
+                            BottomNavigationView.OnNavigationItemSelectedListener,
+                            SetCategoryListener,
+                            CategoryLoadListener,
+                            BookmarkNotifyList,
+                            Back {
 
     private val viewModel by lazy {
         ViewModelProvider(this).get(PostBoViewModel::class.java)
     }
+
+    private var bookmarks = listOf<Bookmark>()
+    private var categories = emptyList<MenuCategory>()
 
     lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var bottomNavigation: BottomNavigationView
@@ -41,11 +52,17 @@ class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, Bott
     private lateinit var postListListener: PostListListener
     private lateinit var sharePostListener: SharePostListener
     private lateinit var bookmarkPostListener: BookmarkPostListener
+    private lateinit var bottomNavigationListener: BottomNavigationListener
 
     val paginationStatus = PaginationStatus()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val bookmarkList: BookmarkList? = arguments?.getParcelable("BOOKMARKS")
+        if (bookmarkList != null) {
+            bookmarks = bookmarkList.bookmarkList
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -57,11 +74,13 @@ class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, Bott
         postListListener = context as PostListListener
         sharePostListener = context as SharePostListener
         bookmarkPostListener = context as BookmarkPostListener
+        bottomNavigationListener = context as BottomNavigationListener
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
         postsListRecyclerViewAdapter = PostsListRecyclerViewAdapter(postListListener, sharePostListener, bookmarkPostListener)
+        postsListRecyclerViewAdapter.menuCategoriesList = categories
         val linearLayoutManager = NpaLinearLayoutManager(context)
 
         recyclerView.apply {
@@ -80,6 +99,8 @@ class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, Bott
             }
         })
         recyclerView.addOnScrollListener(postsListRecyclerViewOnScrollListener)
+
+        recyclerView.addItemDecoration(MemberItemDecoration())
 
         swipeRefresh = view.findViewById(R.id.swipeRefresh)
         swipeRefresh.setOnRefreshListener(this)
@@ -110,23 +131,33 @@ class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, Bott
         })
 
         if (paginationStatus.page <= 1) {
+            Log.d("ALVARO", "page <= 1")
             swipeRefresh.isRefreshing = true
-            viewModel.getPosts()
+
+            if (bookmarks.isEmpty()) {
+                Log.d("ALVARO", "isEmpty")
+                viewModel.getPosts()
+                bottomNavigation.checkItem(R.id.home)
+            }
+            else {
+                viewModel.getPosts(paginationStatus.page, paginationStatus.category, Bookmark.convertListToArray(bookmarks))
+                bottomNavigation.checkItem(R.id.bookmark)
+            }
         }
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.home -> {
-                Toast.makeText(context, "HOME", Toast.LENGTH_SHORT).show()
+                bottomNavigationListener.onBottomNavigationHomeSelected()
                 return true
             }
             R.id.trending -> {
-                Toast.makeText(context, "TRENDING", Toast.LENGTH_SHORT).show()
+                bottomNavigationListener.onBottomNavigationTrendingSelected()
                 return true
             }
             R.id.bookmark -> {
-                Toast.makeText(context, "BOOKMARK", Toast.LENGTH_SHORT).show()
+                bottomNavigationListener.onBottomNavigationBookmarkSelected()
                 return true
             }
         }
@@ -154,19 +185,40 @@ class PostsListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, Bott
     }
 
     override fun onRefresh() {
-        postsListRecyclerViewAdapter.postsList = mutableListOf()
+        if (bookmarks.isEmpty()) {
+            postsListRecyclerViewAdapter.postsList = mutableListOf()
 
-        paginationStatus.reset()
-        viewModel.getPosts(paginationStatus.page, paginationStatus.category)
+            paginationStatus.reset()
+            viewModel.getPosts(paginationStatus.page, paginationStatus.category)
+            bottomNavigation.checkItem(R.id.home)
+        } else {
+            paginationStatus.reset()
+            viewModel.getPosts(paginationStatus.page, paginationStatus.category, Bookmark.convertListToArray(bookmarks))
+            bottomNavigation.checkItem(R.id.bookmark)
+        }
     }
 
     override fun onCategoriesLoaded(categories: List<MenuCategory>) {
-        postsListRecyclerViewAdapter.menuCategoriesList = categories
+        this.categories = categories
+
+        if (::postsListRecyclerViewAdapter.isInitialized)
+            postsListRecyclerViewAdapter.menuCategoriesList = categories
     }
 
     override fun onNotifyListForBookmark(post: PostBO) {
         val index = postsListRecyclerViewAdapter.postsList.indexOf(post)
         postsListRecyclerViewAdapter.notifyItemChanged(index)
+    }
+
+    private fun BottomNavigationView.checkItem(actionId: Int) {
+        menu.findItem(actionId)?.isChecked = true
+    }
+
+    override fun onBackPressed() {
+        if (bookmarks.isEmpty())
+            bottomNavigation.checkItem(R.id.home)
+        //else
+            //bottomNavigation.checkItem(R.id.bookmark)
     }
 }
 
@@ -187,6 +239,14 @@ class PostsListRecyclerViewOnScrollListener(private val callback: LoadMoreListen
     }
 }
 
+class MemberItemDecoration: RecyclerView.ItemDecoration() {
+    override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
+        if (parent.getChildAdapterPosition(view) == parent.adapter!!.itemCount - 1) {
+            outRect.bottom = 170
+        }
+    }
+}
+
 interface SetCategoryListener {
     fun onSetCategory(categoryId: Int)
 }
@@ -197,6 +257,16 @@ interface CategoryLoadListener {
 
 interface BookmarkNotifyList {
     fun onNotifyListForBookmark(post: PostBO)
+}
+
+interface BottomNavigationListener {
+    fun onBottomNavigationHomeSelected()
+    fun onBottomNavigationTrendingSelected()
+    fun onBottomNavigationBookmarkSelected()
+}
+
+interface Back {
+    fun onBackPressed()
 }
 
 private class NpaLinearLayoutManager(context: Context?) : LinearLayoutManager(context) {

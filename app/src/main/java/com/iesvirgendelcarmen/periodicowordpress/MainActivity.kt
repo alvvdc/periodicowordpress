@@ -27,13 +27,15 @@ import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCatego
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCategoryMapper
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.model.room.Bookmark
+import com.iesvirgendelcarmen.periodicowordpress.model.room.BookmarkList
 import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.Media
 import com.iesvirgendelcarmen.periodicowordpress.view.*
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.BookmarkViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.CategoryViewModel
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.fragment_posts_list.*
 
-class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener, SharePostListener, BookmarkPostListener, ImageDetailListener, CloseFragmentListener {
+class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener, SharePostListener, BookmarkPostListener, ImageDetailListener, CloseFragmentListener, BottomNavigationListener {
 
     private val categoryViewModel by lazy {
         ViewModelProvider(this).get(CategoryViewModel::class.java)
@@ -132,6 +134,8 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
     override fun onBackPressed() {
         supportActionBar?.show()
 
+        postsListFragment.onBackPressed()
+
         if (drawerLayout.isDrawerOpen(GravityCompat.START))
             drawerLayout.closeDrawer(GravityCompat.START)
         else
@@ -213,6 +217,33 @@ class MainActivity : AppCompatActivity(), MenuCategoryListener, PostListListener
 
     override fun onClickCloseFragment() {
         supportFragmentManager.popBackStack()
+    }
+
+    override fun onBottomNavigationHomeSelected() {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.container, postsListFragment)
+            .commit()
+
+        postsListFragment.bottomNavigation.menu.findItem(R.id.home).isChecked = true
+    }
+
+    override fun onBottomNavigationTrendingSelected() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun onBottomNavigationBookmarkSelected() {
+        val bundle = Bundle()
+        bundle.putParcelable("BOOKMARKS", BookmarkList(bookmarks.toList()))
+
+        val postsListFragment = PostsListFragment()
+        postsListFragment.arguments = bundle
+
+        supportFragmentManager.beginTransaction()
+            .add(R.id.container, postsListFragment)
+            .addToBackStack(null)
+            .commit()
+
+        postsListFragment.onCategoriesLoaded(menuCategoriesList)
     }
 }
 

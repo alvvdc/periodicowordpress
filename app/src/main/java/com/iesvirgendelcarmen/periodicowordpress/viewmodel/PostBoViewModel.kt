@@ -32,7 +32,7 @@ class PostBoViewModel(): ViewModel() {
         })
     }
 
-    fun getPosts(page: Int = 1, category: Int = -1) {
+    fun getPosts(page: Int = 1, category: Int = -1, posts: Array<Int>? = null) {
 
         postBoRepository.readPostsBo(object: PostBoCallback.ListPostBO {
             override fun onResponse(postsBO: List<PostBO>) {
@@ -47,6 +47,6 @@ class PostBoViewModel(): ViewModel() {
                 postsBoListLiveData.value = Resource.loading(emptyList())
             }
 
-        }, page, category)
+        }, page, category, posts)
     }
 }

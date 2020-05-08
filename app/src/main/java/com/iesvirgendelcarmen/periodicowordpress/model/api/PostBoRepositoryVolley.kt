@@ -12,6 +12,7 @@ import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MediaMappe
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostMapper
 import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.*
+import java.lang.StringBuilder
 import java.util.*
 
 object PostBoRepositoryVolley {
@@ -31,7 +32,7 @@ object PostBoRepositoryVolley {
         })
     }
 
-    fun readPostsBo(callback: PostBoCallback.ListPostBO, page: Int = 1, category: Int = -1) {
+    fun readPostsBo(callback: PostBoCallback.ListPostBO, page: Int = 1, category: Int = -1, posts: Array<Int>? = null) {
         getPostsBO(object: PostBoCallback.ListPostBO {
             override fun onResponse(postsBO: List<PostBO>) {
                 callback.onResponse(postsBO)
@@ -44,7 +45,7 @@ object PostBoRepositoryVolley {
             override fun onLoading() {
                 callback.onLoading()
             }
-        }, page, category)
+        }, page, category, posts)
     }
 
 
@@ -68,14 +69,26 @@ object PostBoRepositoryVolley {
     }
 
 
-    private fun getPostsBO(callback: PostBoCallback.ListPostBO, page: Int = 1, category: Int = -1) {
+    private fun getPostsBO(callback: PostBoCallback.ListPostBO, page: Int = 1, category: Int = -1, posts: Array<Int>? = null) {
         callback.onLoading()
         VolleySingleton.getInstance().requestQueue
 
-        val URL = if (category == -1)
+        var postsIds = ""
+
+        if (posts != null) {
+            val stringBuilder = StringBuilder()
+            posts.forEach { id -> stringBuilder.append("$id,") }
+            postsIds = stringBuilder.toString()
+        }
+
+        val URL = if (category == -1 && posts == null)
             Endpoint.POSTS_URL + Endpoint.PER_PAGE + Endpoint.DEFAULT_PER_PAGE.toString() + Endpoint.PAGE + page.toString()
+        else if (category == -1 && posts != null)
+            Endpoint.POSTS_URL + Endpoint.PER_PAGE + Endpoint.DEFAULT_PER_PAGE.toString() + Endpoint.PAGE + page.toString() + Endpoint.INCLUDE + postsIds
         else
             Endpoint.POSTS_URL + Endpoint.PER_PAGE + Endpoint.DEFAULT_PER_PAGE.toString() + Endpoint.PAGE + page.toString() + Endpoint.CATEGORIES_OPTION + category
+
+        Log.d("ALVARO", URL)
 
         val stringRequest = StringRequest(
             Request.Method.GET,
