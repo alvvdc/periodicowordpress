@@ -60,6 +60,7 @@ class PostsListFragment :   Fragment(),
     private lateinit var sharePostListener: SharePostListener
     private lateinit var bookmarkPostListener: BookmarkPostListener
     private lateinit var bottomNavigationListener: BottomNavigationListener
+    private lateinit var drawerLock: DrawerLock
 
     val paginationStatus = PaginationStatus()
 
@@ -69,7 +70,15 @@ class PostsListFragment :   Fragment(),
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        if (isBookmarkLoadEnabled())
+            drawerLock.lockDrawerLayout()
         return inflater.inflate(R.layout.fragment_posts_list, container, false)
+    }
+
+    override fun onDestroyView() {
+        if (isBookmarkLoadEnabled())
+            drawerLock.unlockDrawerLayout()
+        super.onDestroyView()
     }
 
     override fun onAttach(context: Context) {
@@ -78,6 +87,7 @@ class PostsListFragment :   Fragment(),
         sharePostListener = context as SharePostListener
         bookmarkPostListener = context as BookmarkPostListener
         bottomNavigationListener = context as BottomNavigationListener
+        drawerLock = context as DrawerLock
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

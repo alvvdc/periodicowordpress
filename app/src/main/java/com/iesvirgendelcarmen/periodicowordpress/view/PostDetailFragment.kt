@@ -19,6 +19,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.iesvirgendelcarmen.periodicowordpress.BookmarkPostListener
+import com.iesvirgendelcarmen.periodicowordpress.DrawerLock
 
 import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
@@ -51,6 +52,7 @@ class PostDetailFragment : Fragment() {
     private lateinit var bookmarkPostListener: BookmarkPostListener
     private lateinit var notifyBookmarkNotifyList: BookmarkNotifyList
     private lateinit var imageDetailListener: ImageDetailListener
+    private lateinit var drawerLock: DrawerLock
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,10 +65,17 @@ class PostDetailFragment : Fragment() {
         sharePostListener = context as SharePostListener
         bookmarkPostListener = context as BookmarkPostListener
         imageDetailListener = context as ImageDetailListener
+        drawerLock = context as DrawerLock
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        drawerLock.lockDrawerLayout()
         return inflater.inflate(R.layout.fragment_post_detail, container, false)
+    }
+
+    override fun onDestroyView() {
+        drawerLock.unlockDrawerLayout()
+        super.onDestroyView()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

@@ -33,7 +33,8 @@ class MainActivity :    AppCompatActivity(),
                         BookmarkPostListener,
                         ImageDetailListener,
                         CloseFragmentListener,
-                        BottomNavigationListener {
+                        BottomNavigationListener,
+                        DrawerLock {
 
     private val categoryViewModel by lazy {
         ViewModelProvider(this).get(CategoryViewModel::class.java)
@@ -260,6 +261,18 @@ class MainActivity :    AppCompatActivity(),
             .addToBackStack(null)
             .commit()
     }
+
+    override fun lockDrawerLayout() {
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+        supportActionBar?.setDisplayHomeAsUpEnabled(false)
+        Log.d("ALVARO", "lockDrawerLayout")
+    }
+
+    override fun unlockDrawerLayout() {
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        Log.d("ALVARO", "unlockDrawerLayout")
+    }
 }
 
 interface SharePostListener {
@@ -273,4 +286,9 @@ interface BookmarkPostListener {
 
 interface CloseFragmentListener {
     fun onClickCloseFragment()
+}
+
+interface DrawerLock {
+    fun lockDrawerLayout()
+    fun unlockDrawerLayout()
 }
