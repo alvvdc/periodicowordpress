@@ -3,6 +3,7 @@ package com.iesvirgendelcarmen.periodicowordpress
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -143,7 +144,10 @@ class MainActivity :    AppCompatActivity(),
     }
 
     override fun onBackPressed() {
-        supportActionBar?.show()
+        val imageDetailFragment = supportFragmentManager.findFragmentByTag("IMAGE_DETAIL_FRAGMENT")
+
+        if (imageDetailFragment == null)
+            supportActionBar?.show()
 
         postsListFragment.onBackPressed()
 
@@ -222,7 +226,7 @@ class MainActivity :    AppCompatActivity(),
         imageDetailFragment.arguments = bundle
 
         supportFragmentManager.beginTransaction()
-            .add(R.id.container, imageDetailFragment)
+            .add(R.id.container, imageDetailFragment, "IMAGE_DETAIL_FRAGMENT")
             .addToBackStack(null)
             .commit()
     }
