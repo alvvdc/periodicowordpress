@@ -26,6 +26,8 @@ import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.model.room.Bookmark
 import com.iesvirgendelcarmen.periodicowordpress.model.room.BookmarkList
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.BookmarkViewModel
+import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PaginationStatus
+import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PaginationViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PostBoViewModel
 import java.util.zip.Inflater
 
@@ -46,6 +48,10 @@ class PostsListFragment :   Fragment(),
         ViewModelProvider(this).get(BookmarkViewModel::class.java)
     }
 
+    private val paginationViewModel by lazy {
+        ViewModelProvider(this).get(PaginationViewModel::class.java)
+    }
+
     private var status = MainActivity.LOAD_HOME
 
     private var categories = emptyList<MenuCategory>()
@@ -62,11 +68,12 @@ class PostsListFragment :   Fragment(),
     private lateinit var bottomNavigationListener: BottomNavigationListener
     private lateinit var drawerLock: DrawerLock
 
-    val paginationStatus = PaginationStatus()
+    private lateinit var paginationStatus: PaginationStatus
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.status = arguments?.getInt(MainActivity.STATUS_KEY, MainActivity.LOAD_HOME)!!
+        paginationStatus = paginationViewModel.paginationStatus
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -131,8 +138,10 @@ class PostsListFragment :   Fragment(),
         postViewModel.postsBoListLiveData.observe(viewLifecycleOwner, Observer { resource ->
             when (resource.status) {
                 Resource.Status.SUCCESS -> {
-                    postsListRecyclerViewAdapter.postsList.addAll(resource.data)
-                    postsListRecyclerViewAdapter.notifyItemRangeChanged((paginationStatus.page - 1) * 10, Endpoint.DEFAULT_PER_PAGE)
+                    if (!postsListRecyclerViewAdapter.postsList.containsAll(resource.data)) {
+                        postsListRecyclerViewAdapter.postsList.addAll(resource.data)
+                        postsListRecyclerViewAdapter.notifyItemRangeChanged((paginationStatus.page - 1) * 10, Endpoint.DEFAULT_PER_PAGE)
+                    }
 
                     if (resource.data.size < Endpoint.DEFAULT_PER_PAGE)
                         paginationStatus.isListEnded = true
@@ -146,8 +155,9 @@ class PostsListFragment :   Fragment(),
             }
         })
 
-        if (paginationStatus.page <= 1) {
+        if (paginationStatus.page <= 0) {
             swipeRefresh.isRefreshing = true
+            paginationStatus.page = 1
 
             if (isBookmarkLoadEnabled())
             {
@@ -189,17 +199,6 @@ class PostsListFragment :   Fragment(),
         return false
     }
 
-    data class PaginationStatus(var isLoading: Boolean = false, var page: Int = 1, var isListEnded: Boolean = false, var category: Int = -1) {
-        fun nextPage() = page++
-
-        fun reset() {
-            isLoading = false
-            page = 1
-            isListEnded = false
-            category = -1
-        }
-    }
-
     override fun onSetCategory(categoryId: Int) {
         postsListRecyclerViewAdapter.postsList = mutableListOf()
         swipeRefresh.isRefreshing = true
@@ -213,6 +212,7 @@ class PostsListFragment :   Fragment(),
         postsListRecyclerViewAdapter.postsList = mutableListOf()
 
         paginationStatus.reset()
+        paginationStatus.page = 1
 
         if (isBookmarkLoadEnabled()) {
             bookmarkViewModel.getAll().observe(viewLifecycleOwner, Observer {
