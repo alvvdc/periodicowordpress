@@ -221,7 +221,6 @@ class PostsListFragment :   Fragment(),
         postsListRecyclerViewAdapter.postsList = mutableListOf()
 
         paginationStatus.reset()
-        paginationStatus.page = 1
 
         if (isBookmarkLoadEnabled()) {
             bookmarkViewModel.getAll().observe(viewLifecycleOwner, Observer {

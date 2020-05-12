@@ -11,7 +11,7 @@ data class PaginationStatus(var isLoading: Boolean = false, var page: Int = 0, v
 
     fun reset() {
         isLoading = false
-        page = 0
+        page = 1
         isListEnded = false
         category = -1
     }
