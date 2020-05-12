@@ -35,6 +35,7 @@ import java.util.zip.Inflater
 class PostsListFragment :   Fragment(),
                             SwipeRefreshLayout.OnRefreshListener,
                             BottomNavigationView.OnNavigationItemSelectedListener,
+                            BottomNavigationView.OnNavigationItemReselectedListener,
                             SetCategoryListener,
                             CategoryLoadListener,
                             BookmarkNotifyList,
@@ -60,6 +61,7 @@ class PostsListFragment :   Fragment(),
     private lateinit var bottomNavigation: BottomNavigationView
     private lateinit var noBookmarksView: ConstraintLayout
 
+    private lateinit var recyclerView: RecyclerView
     private lateinit var postsListRecyclerViewAdapter: PostsListRecyclerViewAdapter
     private lateinit var postsListRecyclerViewOnScrollListener: PostsListRecyclerViewOnScrollListener
     private lateinit var postListListener: PostListListener
@@ -98,7 +100,7 @@ class PostsListFragment :   Fragment(),
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
+        recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
         postsListRecyclerViewAdapter = PostsListRecyclerViewAdapter(postListListener, sharePostListener, bookmarkPostListener)
         postsListRecyclerViewAdapter.menuCategoriesList = categories
         val linearLayoutManager = NpaLinearLayoutManager(context)
@@ -127,6 +129,7 @@ class PostsListFragment :   Fragment(),
 
         bottomNavigation = view.findViewById<BottomNavigationView>(R.id.bottomNavigation)
         bottomNavigation.setOnNavigationItemSelectedListener(this)
+        bottomNavigation.setOnNavigationItemReselectedListener(this)
 
         noBookmarksView = view.findViewById(R.id.noBookmarksView)
         noBookmarksView.visibility = View.GONE
@@ -197,6 +200,12 @@ class PostsListFragment :   Fragment(),
             }
         }
         return false
+    }
+
+    override fun onNavigationItemReselected(item: MenuItem) {
+        if (item.itemId == R.id.home) {
+            recyclerView.smoothScrollToPosition(0)
+        }
     }
 
     override fun onSetCategory(categoryId: Int) {

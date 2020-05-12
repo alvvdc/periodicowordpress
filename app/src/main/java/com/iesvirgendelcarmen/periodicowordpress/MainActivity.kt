@@ -265,13 +265,11 @@ class MainActivity :    AppCompatActivity(),
     override fun lockDrawerLayout() {
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
         supportActionBar?.setDisplayHomeAsUpEnabled(false)
-        Log.d("ALVARO", "lockDrawerLayout")
     }
 
     override fun unlockDrawerLayout() {
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        Log.d("ALVARO", "unlockDrawerLayout")
     }
 }
 
