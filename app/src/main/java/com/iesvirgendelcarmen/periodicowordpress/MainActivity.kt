@@ -3,7 +3,6 @@ package com.iesvirgendelcarmen.periodicowordpress
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -20,6 +19,7 @@ import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCatego
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCategoryMapper
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.model.room.Bookmark
+import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.Category
 import com.iesvirgendelcarmen.periodicowordpress.view.*
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.BookmarkViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.CategoryViewModel
@@ -34,7 +34,15 @@ class MainActivity :    AppCompatActivity(),
                         ImageDetailListener,
                         CloseFragmentListener,
                         BottomNavigationListener,
-                        DrawerLock {
+                        DrawerLayoutLock {
+
+
+    private var bookmarks = mutableListOf<Bookmark>()
+    private var menuCategoriesList = listOf<MenuCategory>()
+
+    lateinit var postsListFragment: PostsListFragment
+    lateinit var categoriesRecyclerView: RecyclerView
+    lateinit var categoriesRecyclerViewAdapter: CategoriesRecyclerViewAdapter
 
     private val categoryViewModel by lazy {
         ViewModelProvider(this).get(CategoryViewModel::class.java)
@@ -44,54 +52,32 @@ class MainActivity :    AppCompatActivity(),
         ViewModelProvider(this).get(BookmarkViewModel::class.java)
     }
 
-    private var bookmarks = mutableListOf<Bookmark>()
-
-    lateinit var postsListFragment: PostsListFragment
-    lateinit var categoriesRecyclerView: RecyclerView
-    lateinit var categoriesRecyclerViewAdapter: CategoriesRecyclerViewAdapter
-
-    val MAIN_CATEGORY_ID = -1
-
-    lateinit var menuCategoriesList: List<MenuCategory>
-
     companion object {
-        val STATUS_KEY = "STATUS"
-        val LOAD_HOME = 0
-        val LOAD_BOOKMARKS = 1
+        const val STATUS_KEY = "STATUS"
+        const val LOAD_HOME = 0
+        const val LOAD_BOOKMARKS = 1
+
+        const val MAIN_CATEGORY_ID = -1
+
+        const val IMAGE_DETAIL_FRAGMENT_TAG = "IMAGE_DETAIL_FRAGMENT"
+
+        const val COLOR_KEY = "COLOR"
+        const val POST_KEY = "POST"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
-
-        val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
-        val drawerToggle = ActionBarDrawerToggle(this, drawerLayout, R.string.open, R.string.close)
-        drawerLayout.addDrawerListener(drawerToggle)
-        drawerToggle.syncState()
+        setDrawerLayout()
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         addCategoriesToNavigationDrawer()
 
-        val bundle = Bundle()
-        bundle.putInt(STATUS_KEY, LOAD_HOME)
+        startPostListFragment(savedInstanceState)
 
-        postsListFragment = PostsListFragment()
-        postsListFragment.arguments = bundle
-
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction().add(
-                R.id.container,
-                postsListFragment
-            ).commit()
-        }
-
-        categoriesRecyclerView = findViewById(R.id.recyclerView)
-        categoriesRecyclerView.layoutManager = LinearLayoutManager(this)
-
-        categoriesRecyclerViewAdapter = CategoriesRecyclerViewAdapter(emptyList(), this)
-        categoriesRecyclerView.adapter = categoriesRecyclerViewAdapter
+        setCategoriesRecyclerView()
     }
 
     override fun onStart() {
@@ -100,6 +86,49 @@ class MainActivity :    AppCompatActivity(),
         bookmarkViewModel.getAll().observe(this, Observer {
             bookmarks = it.toMutableList()
         })
+    }
+
+    //
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                drawerLayout.openDrawer(GravityCompat.START)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onBackPressed() {
+        val imageDetailFragment = supportFragmentManager.findFragmentByTag(IMAGE_DETAIL_FRAGMENT_TAG)
+
+        if (imageDetailFragment == null)
+            supportActionBar?.show()
+
+        postsListFragment.onBackPressed()
+
+        if (drawerLayout.isDrawerOpen(GravityCompat.START))
+            drawerLayout.closeDrawer(GravityCompat.START)
+        else
+            super.onBackPressed()
+    }
+
+    //
+
+    private fun setCategoriesRecyclerView() {
+        categoriesRecyclerView = findViewById(R.id.recyclerView)
+        categoriesRecyclerView.layoutManager = LinearLayoutManager(this)
+
+        categoriesRecyclerViewAdapter = CategoriesRecyclerViewAdapter(emptyList(), this)
+        categoriesRecyclerView.adapter = categoriesRecyclerViewAdapter
+    }
+
+    private fun setDrawerLayout() {
+        val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
+        val drawerToggle = ActionBarDrawerToggle(this, drawerLayout, R.string.open, R.string.close)
+        drawerLayout.addDrawerListener(drawerToggle)
+        drawerToggle.syncState()
     }
 
     private fun addCategoriesToNavigationDrawer() {
@@ -119,8 +148,7 @@ class MainActivity :    AppCompatActivity(),
 
                     menuCategoriesList = menuCategories
                     postsListFragment.onCategoriesLoaded(menuCategories)
-                    categoriesRecyclerViewAdapter.categories = menuCategories
-                    categoriesRecyclerViewAdapter.notifyDataSetChanged()
+                    updateCategoriesRecyclerViewAdapter()
                 }
                 Resource.Status.ERROR -> {
                     Toast.makeText(this, getString(R.string.loadingCategoriesError), Toast.LENGTH_LONG).show()
@@ -134,48 +162,54 @@ class MainActivity :    AppCompatActivity(),
         categoryViewModel.getCategoriesForNavigationDrawer()
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                drawerLayout.openDrawer(GravityCompat.START)
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
+    private fun updateCategoriesRecyclerViewAdapter() {
+        categoriesRecyclerViewAdapter.categories = menuCategoriesList
+        categoriesRecyclerViewAdapter.notifyDataSetChanged()
     }
 
-    override fun onBackPressed() {
-        val imageDetailFragment = supportFragmentManager.findFragmentByTag("IMAGE_DETAIL_FRAGMENT")
-
-        if (imageDetailFragment == null)
-            supportActionBar?.show()
-
-        postsListFragment.onBackPressed()
-
-        if (drawerLayout.isDrawerOpen(GravityCompat.START))
-            drawerLayout.closeDrawer(GravityCompat.START)
-        else
-            super.onBackPressed()
-    }
-
-    override fun onClickMenuCategory(category: MenuCategory) {
-        postsListFragment.onSetCategory(category.id)
-        drawerLayout.closeDrawer(GravityCompat.START)
-    }
-
-    override fun onClickPost(post: PostBO) {
-        val bundle = Bundle()
-        var color = CategoryColor.DEFAULT_COLOR
-
+    private fun getColorForCategories(categoryList: List<Category>): Int {
         for (category in menuCategoriesList) {
-            if (post.categories.isNotEmpty() && category.id == post.categories[0].id) {
-                color = category.color
-                break
+            if (categoryList.isNotEmpty() && category.id == categoryList[0].id) {
+                return category.color
             }
         }
+        return CategoryColor.DEFAULT_COLOR
+    }
 
-        bundle.putInt("COLOR", color)
-        bundle.putParcelable("POST", post)
+    private fun startPostListFragment(savedInstanceState: Bundle?) {
+        val bundle = Bundle()
+        bundle.putInt(STATUS_KEY, LOAD_HOME)
+
+        postsListFragment = PostsListFragment()
+        postsListFragment.arguments = bundle
+
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction().add(
+                R.id.container,
+                postsListFragment
+            ).commit()
+        }
+    }
+
+    private fun startImageDetailFragment(media: MediaBO) {
+        val bundle = Bundle()
+        bundle.putParcelable("MEDIA", media)
+
+        val imageDetailFragment = ImageDetailFragment()
+        imageDetailFragment.arguments = bundle
+
+        supportFragmentManager.beginTransaction()
+            .add(R.id.container, imageDetailFragment, IMAGE_DETAIL_FRAGMENT_TAG)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun startPostDetailFragment(post: PostBO) {
+        val bundle = Bundle()
+        var color = getColorForCategories(post.categories)
+
+        bundle.putInt(COLOR_KEY, color)
+        bundle.putParcelable(POST_KEY, post)
 
         val postDetailFragment = PostDetailFragment()
         postDetailFragment.arguments = bundle
@@ -185,6 +219,31 @@ class MainActivity :    AppCompatActivity(),
             R.id.container,
             postDetailFragment
         ).addToBackStack(null).commit()
+    }
+
+    private fun startBookmarkListFragment() {
+        val bundle = Bundle()
+        bundle.putInt(STATUS_KEY, LOAD_BOOKMARKS)
+
+        val postsListFragment = PostsListFragment()
+        postsListFragment.arguments = bundle
+        postsListFragment.onCategoriesLoaded(menuCategoriesList)
+
+        supportFragmentManager.beginTransaction()
+            .add(R.id.container, postsListFragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    //
+
+    override fun onClickMenuCategory(category: MenuCategory) {
+        postsListFragment.onSetCategory(category.id)
+        drawerLayout.closeDrawer(GravityCompat.START)
+    }
+
+    override fun onClickPost(post: PostBO) {
+        startPostDetailFragment(post)
     }
 
     override fun onClickSharePost(post: PostBO) {
@@ -205,13 +264,13 @@ class MainActivity :    AppCompatActivity(),
             bookmarkViewModel.remove(bookmark)
 
             if (bookmarks.contains(bookmark)) bookmarks.remove(bookmark)
-            postsListFragment.onNotifyListForBookmark(post)
+            postsListFragment.onPostBookmarkedChange(post)
             return false
         } else {
             bookmarkViewModel.add(bookmark)
             
             if (!bookmarks.contains(bookmark)) bookmarks.add(bookmark)
-            postsListFragment.onNotifyListForBookmark(post)
+            postsListFragment.onPostBookmarkedChange(post)
             return true
         }
         return false
@@ -220,16 +279,7 @@ class MainActivity :    AppCompatActivity(),
     override fun isPostBookmarked(post: PostBO) = bookmarks.contains(Bookmark(post.id))
 
     override fun onImageClickListener(media: MediaBO) {
-        val bundle = Bundle()
-        bundle.putParcelable("MEDIA", media)
-
-        val imageDetailFragment = ImageDetailFragment()
-        imageDetailFragment.arguments = bundle
-
-        supportFragmentManager.beginTransaction()
-            .add(R.id.container, imageDetailFragment, "IMAGE_DETAIL_FRAGMENT")
-            .addToBackStack(null)
-            .commit()
+        startImageDetailFragment(media)
     }
 
     override fun onClickCloseFragment() {
@@ -249,17 +299,7 @@ class MainActivity :    AppCompatActivity(),
     }
 
     override fun onBottomNavigationBookmarkSelected() {
-        val bundle = Bundle()
-        bundle.putInt(STATUS_KEY, LOAD_BOOKMARKS)
-
-        val postsListFragment = PostsListFragment()
-        postsListFragment.arguments = bundle
-        postsListFragment.onCategoriesLoaded(menuCategoriesList)
-
-        supportFragmentManager.beginTransaction()
-            .add(R.id.container, postsListFragment)
-            .addToBackStack(null)
-            .commit()
+        startBookmarkListFragment()
     }
 
     override fun lockDrawerLayout() {
@@ -286,7 +326,7 @@ interface CloseFragmentListener {
     fun onClickCloseFragment()
 }
 
-interface DrawerLock {
+interface DrawerLayoutLock {
     fun lockDrawerLayout()
     fun unlockDrawerLayout()
 }

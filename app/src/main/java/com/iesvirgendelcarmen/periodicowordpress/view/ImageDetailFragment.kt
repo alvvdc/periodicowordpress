@@ -23,6 +23,7 @@ import java.util.*
 class ImageDetailFragment : Fragment() {
 
     lateinit var media: MediaBO
+
     lateinit var closeFragmentListener: CloseFragmentListener
 
     override fun onCreate(savedInstanceState: Bundle?) {

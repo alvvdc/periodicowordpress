@@ -3,12 +3,10 @@ package com.iesvirgendelcarmen.periodicowordpress.view
 import android.content.Context
 import android.graphics.Rect
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
@@ -24,12 +22,10 @@ import com.iesvirgendelcarmen.periodicowordpress.model.Resource
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MenuCategory
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import com.iesvirgendelcarmen.periodicowordpress.model.room.Bookmark
-import com.iesvirgendelcarmen.periodicowordpress.model.room.BookmarkList
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.BookmarkViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PaginationStatus
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PaginationViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PostBoViewModel
-import java.util.zip.Inflater
 
 
 class PostsListFragment :   Fragment(),
@@ -38,8 +34,27 @@ class PostsListFragment :   Fragment(),
                             BottomNavigationView.OnNavigationItemReselectedListener,
                             SetCategoryListener,
                             CategoryLoadListener,
-                            BookmarkNotifyList,
-                            Back {
+                            BookmarkChangeListener,
+                            BackPress {
+
+
+
+    private var status = MainActivity.LOAD_HOME
+    private var categories = emptyList<MenuCategory>()
+
+    private lateinit var swipeRefresh: SwipeRefreshLayout
+    private lateinit var bottomNavigation: BottomNavigationView
+    private lateinit var thereAreNoBookmarksView: ConstraintLayout
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var postsListRecyclerViewAdapter: PostsListRecyclerViewAdapter
+
+    private lateinit var postsListRecyclerViewOnScrollListener: PostsListRecyclerViewOnScrollListener
+    private lateinit var postListListener: PostListListener
+    private lateinit var sharePostListener: SharePostListener
+    private lateinit var bookmarkPostListener: BookmarkPostListener
+    private lateinit var bottomNavigationListener: BottomNavigationListener
+    private lateinit var drawerLayoutLock: DrawerLayoutLock
+    private lateinit var paginationStatus: PaginationStatus
 
     private val postViewModel by lazy {
         ViewModelProvider(this).get(PostBoViewModel::class.java)
@@ -53,24 +68,14 @@ class PostsListFragment :   Fragment(),
         ViewModelProvider(this).get(PaginationViewModel::class.java)
     }
 
-    private var status = MainActivity.LOAD_HOME
-
-    private var categories = emptyList<MenuCategory>()
-
-    lateinit var swipeRefresh: SwipeRefreshLayout
-    private lateinit var bottomNavigation: BottomNavigationView
-    private lateinit var noBookmarksView: ConstraintLayout
-
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var postsListRecyclerViewAdapter: PostsListRecyclerViewAdapter
-    private lateinit var postsListRecyclerViewOnScrollListener: PostsListRecyclerViewOnScrollListener
-    private lateinit var postListListener: PostListListener
-    private lateinit var sharePostListener: SharePostListener
-    private lateinit var bookmarkPostListener: BookmarkPostListener
-    private lateinit var bottomNavigationListener: BottomNavigationListener
-    private lateinit var drawerLock: DrawerLock
-
-    private lateinit var paginationStatus: PaginationStatus
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        postListListener = context as PostListListener
+        sharePostListener = context as SharePostListener
+        bookmarkPostListener = context as BookmarkPostListener
+        bottomNavigationListener = context as BottomNavigationListener
+        drawerLayoutLock = context as DrawerLayoutLock
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,109 +85,39 @@ class PostsListFragment :   Fragment(),
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         if (isBookmarkLoadEnabled())
-            drawerLock.lockDrawerLayout()
+            drawerLayoutLock.lockDrawerLayout()
+
         return inflater.inflate(R.layout.fragment_posts_list, container, false)
     }
 
-    override fun onDestroyView() {
-        if (isBookmarkLoadEnabled())
-            drawerLock.unlockDrawerLayout()
-        super.onDestroyView()
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        postListListener = context as PostListListener
-        sharePostListener = context as SharePostListener
-        bookmarkPostListener = context as BookmarkPostListener
-        bottomNavigationListener = context as BottomNavigationListener
-        drawerLock = context as DrawerLock
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
-        postsListRecyclerViewAdapter = PostsListRecyclerViewAdapter(postListListener, sharePostListener, bookmarkPostListener)
-        postsListRecyclerViewAdapter.menuCategoriesList = categories
-        val linearLayoutManager = NpaLinearLayoutManager(context)
-
-        recyclerView.apply {
-            layoutManager = linearLayoutManager
-            adapter = postsListRecyclerViewAdapter
-        }
-
-        postsListRecyclerViewOnScrollListener = PostsListRecyclerViewOnScrollListener(object: PostsListRecyclerViewOnScrollListener.LoadMoreListener {
-            override fun onLoadMore() {
-                if (!paginationStatus.isListEnded) {
-                    paginationStatus.nextPage()
-                    swipeRefresh.isRefreshing = true
-                    paginationStatus.isLoading = true
-                    postViewModel.getPosts(paginationStatus.page, paginationStatus.category)
-                }
-            }
-        })
-        recyclerView.addOnScrollListener(postsListRecyclerViewOnScrollListener)
-
-        recyclerView.addItemDecoration(MemberItemDecoration())
+        setRecyclerView(view)
 
         swipeRefresh = view.findViewById(R.id.swipeRefresh)
         swipeRefresh.setOnRefreshListener(this)
 
-        bottomNavigation = view.findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        bottomNavigation = view.findViewById(R.id.bottomNavigation)
         bottomNavigation.setOnNavigationItemSelectedListener(this)
         bottomNavigation.setOnNavigationItemReselectedListener(this)
 
-        noBookmarksView = view.findViewById(R.id.noBookmarksView)
-        noBookmarksView.visibility = View.GONE
+        thereAreNoBookmarksView = view.findViewById(R.id.noBookmarksView)
+        thereAreNoBookmarksView.visibility = View.GONE
     }
 
     override fun onStart() {
         super.onStart()
-
-        postViewModel.postsBoListLiveData.observe(viewLifecycleOwner, Observer { resource ->
-            when (resource.status) {
-                Resource.Status.SUCCESS -> {
-                    if (!postsListRecyclerViewAdapter.postsList.containsAll(resource.data)) {
-                        postsListRecyclerViewAdapter.postsList.addAll(resource.data)
-                        postsListRecyclerViewAdapter.notifyItemRangeChanged((paginationStatus.page - 1) * 10, Endpoint.DEFAULT_PER_PAGE)
-                    }
-
-                    if (resource.data.size < Endpoint.DEFAULT_PER_PAGE)
-                        paginationStatus.isListEnded = true
-
-                    swipeRefresh.isRefreshing = false
-                    paginationStatus.isLoading = false
-                }
-                Resource.Status.ERROR -> {
-                    Toast.makeText(context, getString(R.string.LOADING_POSTS_ERROR), Toast.LENGTH_LONG).show()
-                }
-            }
-        })
-
-        if (paginationStatus.page <= 0) {
-            swipeRefresh.isRefreshing = true
-            paginationStatus.page = 1
-
-            if (isBookmarkLoadEnabled())
-            {
-                val bookmarkLiveData = bookmarkViewModel.getAll()
-
-                bookmarkLiveData.observe(viewLifecycleOwner, Observer {
-                    if (it.isEmpty()) {
-                        noBookmarksView.visibility = View.VISIBLE
-                        swipeRefresh.isRefreshing = false
-                    } else {
-                        postViewModel.getPosts(paginationStatus.page, paginationStatus.category, Bookmark.convertListToArray(it))
-                    }
-                })
-
-                bottomNavigation.checkItem(R.id.bookmark)
-            }
-            else
-            {
-                postViewModel.getPosts()
-            }
-        }
+        observePostsListLiveData()
+        getPostsOnStart()
     }
+
+    override fun onDestroyView() {
+        if (isBookmarkLoadEnabled())
+            drawerLayoutLock.unlockDrawerLayout()
+
+        super.onDestroyView()
+    }
+
+    //
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
@@ -208,15 +143,6 @@ class PostsListFragment :   Fragment(),
         }
     }
 
-    override fun onSetCategory(categoryId: Int) {
-        postsListRecyclerViewAdapter.postsList = mutableListOf()
-        swipeRefresh.isRefreshing = true
-
-        paginationStatus.reset()
-        paginationStatus.category = categoryId
-        postViewModel.getPosts(paginationStatus.page, paginationStatus.category)
-    }
-
     override fun onRefresh() {
         postsListRecyclerViewAdapter.postsList = mutableListOf()
 
@@ -231,6 +157,107 @@ class PostsListFragment :   Fragment(),
         }
     }
 
+    //
+
+    private fun setRecyclerView(view: View) {
+        recyclerView = view.findViewById(R.id.recyclerView)
+        postsListRecyclerViewAdapter = PostsListRecyclerViewAdapter(postListListener, sharePostListener, bookmarkPostListener)
+        postsListRecyclerViewAdapter.menuCategoriesList = categories
+        val linearLayoutManager = NpaLinearLayoutManager(context)
+
+        recyclerView.apply {
+            layoutManager = linearLayoutManager
+            adapter = postsListRecyclerViewAdapter
+        }
+
+        postsListRecyclerViewOnScrollListener = PostsListRecyclerViewOnScrollListener(onLoadMoreListener())
+        recyclerView.addOnScrollListener(postsListRecyclerViewOnScrollListener)
+        recyclerView.addItemDecoration(MemberItemDecoration())
+    }
+
+    private fun onLoadMoreListener(): PostsListRecyclerViewOnScrollListener.LoadMoreListener {
+        return object : PostsListRecyclerViewOnScrollListener.LoadMoreListener {
+            override fun onLoadMore() {
+                if (!paginationStatus.isListEnded) {
+                    paginationStatus.nextPage()
+                    swipeRefresh.isRefreshing = true
+                    paginationStatus.isLoading = true
+                    postViewModel.getPosts(paginationStatus.page, paginationStatus.category)
+                }
+            }
+        }
+    }
+
+    private fun observePostsListLiveData() {
+        postViewModel.postsBoListLiveData.observe(viewLifecycleOwner, Observer { resource ->
+            when (resource.status) {
+                Resource.Status.SUCCESS -> {
+                    onSuccessPostsObserver(resource.data)
+                }
+                Resource.Status.ERROR -> {
+                    Toast.makeText(context, getString(R.string.LOADING_POSTS_ERROR), Toast.LENGTH_LONG).show()
+                }
+            }
+        })
+    }
+
+    private fun onSuccessPostsObserver(posts: List<PostBO>) {
+
+        if (!postsListRecyclerViewAdapter.postsList.containsAll(posts)) {
+            postsListRecyclerViewAdapter.postsList.addAll(posts)
+            postsListRecyclerViewAdapter.notifyItemRangeChanged((paginationStatus.page - 1) * 10, Endpoint.DEFAULT_PER_PAGE)
+        }
+
+        if (posts.size < Endpoint.DEFAULT_PER_PAGE)
+            paginationStatus.isListEnded = true
+
+        swipeRefresh.isRefreshing = false
+        paginationStatus.isLoading = false
+    }
+
+    private fun getPostsOnStart() {
+        if (paginationStatus.page > 0)
+            return
+
+        swipeRefresh.isRefreshing = true
+        paginationStatus.page = 1
+
+        if (isBookmarkLoadEnabled()) {
+            bottomNavigation.checkItem(R.id.bookmark)
+
+            val bookmarkLiveData = bookmarkViewModel.getAll()
+
+            bookmarkLiveData.observe(viewLifecycleOwner, Observer {
+                if (it.isEmpty()) {
+                    thereAreNoBookmarksView.visibility = View.VISIBLE
+                    swipeRefresh.isRefreshing = false
+                } else {
+                    postViewModel.getPosts(paginationStatus.page, paginationStatus.category, Bookmark.convertListToArray(it))
+                }
+            })
+
+        } else {
+            postViewModel.getPosts()
+        }
+    }
+
+    private fun isBookmarkLoadEnabled() = status == MainActivity.LOAD_BOOKMARKS
+
+    private fun BottomNavigationView.checkItem(actionId: Int) {
+        menu.findItem(actionId)?.isChecked = true
+    }
+
+    //
+
+    override fun onSetCategory(categoryId: Int) {
+        postsListRecyclerViewAdapter.postsList = mutableListOf()
+        swipeRefresh.isRefreshing = true
+
+        paginationStatus.reset()
+        paginationStatus.category = categoryId
+        postViewModel.getPosts(paginationStatus.page, paginationStatus.category)
+    }
+
     override fun onCategoriesLoaded(categories: List<MenuCategory>) {
         this.categories = categories
 
@@ -238,24 +265,44 @@ class PostsListFragment :   Fragment(),
             postsListRecyclerViewAdapter.menuCategoriesList = categories
     }
 
-    override fun onNotifyListForBookmark(post: PostBO) {
+    override fun onPostBookmarkedChange(post: PostBO) {
         val index = postsListRecyclerViewAdapter.postsList.indexOf(post)
         postsListRecyclerViewAdapter.notifyItemChanged(index)
-    }
-
-    private fun BottomNavigationView.checkItem(actionId: Int) {
-        menu.findItem(actionId)?.isChecked = true
     }
 
     override fun onBackPressed() {
         if (!isBookmarkLoadEnabled())
             bottomNavigation.checkItem(R.id.home)
     }
-
-    private fun isBookmarkLoadEnabled() = status == MainActivity.LOAD_BOOKMARKS
 }
 
-class PostsListRecyclerViewOnScrollListener(private val callback: LoadMoreListener): RecyclerView.OnScrollListener() {
+//
+
+interface SetCategoryListener {
+    fun onSetCategory(categoryId: Int)
+}
+
+interface CategoryLoadListener {
+    fun onCategoriesLoaded(categories: List<MenuCategory>)
+}
+
+interface BookmarkChangeListener {
+    fun onPostBookmarkedChange(post: PostBO)
+}
+
+interface BottomNavigationListener {
+    fun onBottomNavigationHomeSelected()
+    fun onBottomNavigationTrendingSelected()
+    fun onBottomNavigationBookmarkSelected()
+}
+
+interface BackPress {
+    fun onBackPressed()
+}
+
+//
+
+private class PostsListRecyclerViewOnScrollListener(private val callback: LoadMoreListener): RecyclerView.OnScrollListener() {
 
     override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
         super.onScrolled(recyclerView, dx, dy)
@@ -272,34 +319,12 @@ class PostsListRecyclerViewOnScrollListener(private val callback: LoadMoreListen
     }
 }
 
-class MemberItemDecoration: RecyclerView.ItemDecoration() {
+private class MemberItemDecoration: RecyclerView.ItemDecoration() {
     override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
         if (parent.getChildAdapterPosition(view) == parent.adapter!!.itemCount - 1) {
             outRect.bottom = 170
         }
     }
-}
-
-interface SetCategoryListener {
-    fun onSetCategory(categoryId: Int)
-}
-
-interface CategoryLoadListener {
-    fun onCategoriesLoaded(categories: List<MenuCategory>)
-}
-
-interface BookmarkNotifyList {
-    fun onNotifyListForBookmark(post: PostBO)
-}
-
-interface BottomNavigationListener {
-    fun onBottomNavigationHomeSelected()
-    fun onBottomNavigationTrendingSelected()
-    fun onBottomNavigationBookmarkSelected()
-}
-
-interface Back {
-    fun onBackPressed()
 }
 
 private class NpaLinearLayoutManager(context: Context?) : LinearLayoutManager(context) {

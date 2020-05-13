@@ -5,7 +5,6 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Html
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -19,7 +18,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.iesvirgendelcarmen.periodicowordpress.BookmarkPostListener
-import com.iesvirgendelcarmen.periodicowordpress.DrawerLock
+import com.iesvirgendelcarmen.periodicowordpress.DrawerLayoutLock
 
 import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
@@ -31,8 +30,9 @@ import java.util.*
 
 class PostDetailFragment : Fragment() {
 
-    lateinit var post: PostBO
-    var categoryColor: Int = Color.parseColor("#5979a0")
+    private var categoryColor: Int = Color.parseColor("#5979a0")
+
+    private lateinit var post: PostBO
 
     private lateinit var categoryTextView: TextView
     private lateinit var shareImageView: ImageView
@@ -50,13 +50,12 @@ class PostDetailFragment : Fragment() {
 
     private lateinit var sharePostListener: SharePostListener
     private lateinit var bookmarkPostListener: BookmarkPostListener
-    private lateinit var notifyBookmarkNotifyList: BookmarkNotifyList
     private lateinit var imageDetailListener: ImageDetailListener
-    private lateinit var drawerLock: DrawerLock
+    private lateinit var drawerLayoutLock: DrawerLayoutLock
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        getPostFromParcelable()
+        getPostFromBundle()
         getCategoryColorFromBundle()
     }
 
@@ -65,17 +64,12 @@ class PostDetailFragment : Fragment() {
         sharePostListener = context as SharePostListener
         bookmarkPostListener = context as BookmarkPostListener
         imageDetailListener = context as ImageDetailListener
-        drawerLock = context as DrawerLock
+        drawerLayoutLock = context as DrawerLayoutLock
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        drawerLock.lockDrawerLayout()
+        drawerLayoutLock.lockDrawerLayout()
         return inflater.inflate(R.layout.fragment_post_detail, container, false)
-    }
-
-    override fun onDestroyView() {
-        drawerLock.unlockDrawerLayout()
-        super.onDestroyView()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -95,6 +89,11 @@ class PostDetailFragment : Fragment() {
         featuredImageConstraintLayout.setOnClickListener {
             imageDetailListener.onImageClickListener(post.featuredMedia)
         }
+    }
+
+    override fun onDestroyView() {
+        drawerLayoutLock.unlockDrawerLayout()
+        super.onDestroyView()
     }
 
     private fun setBookmarks() {
@@ -226,7 +225,7 @@ class PostDetailFragment : Fragment() {
         bookmarkButton = view.findViewById(R.id.bookmarkButton)
     }
 
-    private fun getPostFromParcelable() {
+    private fun getPostFromBundle() {
         if (arguments != null) {
             post = arguments?.getParcelable("POST") ?: PostBO()
         }
