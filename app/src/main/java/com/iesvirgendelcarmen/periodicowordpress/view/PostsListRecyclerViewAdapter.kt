@@ -109,6 +109,7 @@ class PostsListRecyclerViewAdapter(
         private fun bindComponents(post: PostBO) {
             title.text = Html.fromHtml(post.title.rendered)
             image.background = null
+            category.text = ""
         }
 
         private fun setDate(post: PostBO) {
