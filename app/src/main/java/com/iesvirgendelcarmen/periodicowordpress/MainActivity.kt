@@ -4,7 +4,10 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
+import android.widget.RelativeLayout
 import android.widget.Toast
+import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -45,6 +48,8 @@ class MainActivity :    AppCompatActivity(),
     lateinit var categoriesRecyclerViewAdapter: CategoriesRecyclerViewAdapter
     lateinit var postsBookmarkFragment: PostsListFragment
 
+    private lateinit var toolbarRelativeLayout: RelativeLayout
+
     private val categoryViewModel by lazy {
         ViewModelProvider(this).get(CategoryViewModel::class.java)
     }
@@ -73,6 +78,8 @@ class MainActivity :    AppCompatActivity(),
         setDrawerLayout()
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+        toolbarRelativeLayout = findViewById(R.id.toolbarRelativeLayout)
 
         addCategoriesToNavigationDrawer()
 
@@ -105,7 +112,7 @@ class MainActivity :    AppCompatActivity(),
         val imageDetailFragment = supportFragmentManager.findFragmentByTag(IMAGE_DETAIL_FRAGMENT_TAG)
 
         if (imageDetailFragment == null)
-            supportActionBar?.show()
+            showActionBar()
 
         postsListFragment.onBackPressed()
 
@@ -215,7 +222,7 @@ class MainActivity :    AppCompatActivity(),
         val postDetailFragment = PostDetailFragment()
         postDetailFragment.arguments = bundle
 
-        supportActionBar?.hide()
+        hideActionBar()
         supportFragmentManager.beginTransaction().add(
             R.id.container,
             postDetailFragment
@@ -234,6 +241,16 @@ class MainActivity :    AppCompatActivity(),
             .add(R.id.container, postsBookmarkFragment)
             .addToBackStack(null)
             .commit()
+    }
+
+    private fun showActionBar() {
+        supportActionBar?.show()
+        toolbarRelativeLayout.visibility = View.VISIBLE
+    }
+
+    private fun hideActionBar() {
+        supportActionBar?.hide()
+        toolbarRelativeLayout.visibility = View.GONE
     }
 
     //

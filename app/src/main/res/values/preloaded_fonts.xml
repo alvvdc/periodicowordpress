@@ -7,6 +7,8 @@
         <item>@font/maven_pro_medium</item>
         <item>@font/open_sans</item>
         <item>@font/open_sans_bold</item>
+        <item>@font/open_sans_condensed_bold</item>
+        <item>@font/open_sans_extrabold</item>
         <item>@font/open_sans_semibold</item>
     </array>
 </resources>
