@@ -139,7 +139,7 @@ class PostsListFragment :   Fragment(),
     }
 
     override fun onNavigationItemReselected(item: MenuItem) {
-        if (item.itemId == R.id.home) {
+        if (item.itemId == R.id.home || item.itemId == R.id.bookmark) {
             recyclerView.smoothScrollToPosition(0)
         }
     }
