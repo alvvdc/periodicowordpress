@@ -3,6 +3,7 @@ package com.iesvirgendelcarmen.periodicowordpress.view
 import android.content.Context
 import android.graphics.Rect
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
@@ -203,9 +204,12 @@ class PostsListFragment :   Fragment(),
 
     private fun onSuccessPostsObserver(posts: List<PostBO>) {
 
-        if (!postsListRecyclerViewAdapter.postsList.containsAll(posts)) {
+        if (!isBookmarkLoadEnabled() && !postsListRecyclerViewAdapter.postsList.containsAll(posts)) {
             postsListRecyclerViewAdapter.postsList.addAll(posts)
             postsListRecyclerViewAdapter.notifyItemRangeChanged((paginationStatus.page - 1) * 10, Endpoint.DEFAULT_PER_PAGE)
+        } else if (isBookmarkLoadEnabled() && swipeRefresh.isRefreshing) {
+            postsListRecyclerViewAdapter.postsList = posts.toMutableList()
+            postsListRecyclerViewAdapter.notifyDataSetChanged()
         }
 
         if (posts.size < Endpoint.DEFAULT_PER_PAGE)
