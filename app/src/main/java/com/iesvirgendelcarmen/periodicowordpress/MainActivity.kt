@@ -43,6 +43,7 @@ class MainActivity :    AppCompatActivity(),
     lateinit var postsListFragment: PostsListFragment
     lateinit var categoriesRecyclerView: RecyclerView
     lateinit var categoriesRecyclerViewAdapter: CategoriesRecyclerViewAdapter
+    lateinit var postsBookmarkFragment: PostsListFragment
 
     private val categoryViewModel by lazy {
         ViewModelProvider(this).get(CategoryViewModel::class.java)
@@ -225,12 +226,12 @@ class MainActivity :    AppCompatActivity(),
         val bundle = Bundle()
         bundle.putInt(STATUS_KEY, LOAD_BOOKMARKS)
 
-        val postsListFragment = PostsListFragment()
-        postsListFragment.arguments = bundle
-        postsListFragment.onCategoriesLoaded(menuCategoriesList)
+        postsBookmarkFragment = PostsListFragment()
+        postsBookmarkFragment.arguments = bundle
+        postsBookmarkFragment.onCategoriesLoaded(menuCategoriesList)
 
         supportFragmentManager.beginTransaction()
-            .add(R.id.container, postsListFragment)
+            .add(R.id.container, postsBookmarkFragment)
             .addToBackStack(null)
             .commit()
     }
@@ -265,12 +266,18 @@ class MainActivity :    AppCompatActivity(),
 
             if (bookmarks.contains(bookmark)) bookmarks.remove(bookmark)
             postsListFragment.onPostBookmarkedChange(post)
+
+            if (::postsBookmarkFragment.isInitialized)
+                postsBookmarkFragment.onPostBookmarkedChange(post)
             return false
         } else {
             bookmarkViewModel.add(bookmark)
             
             if (!bookmarks.contains(bookmark)) bookmarks.add(bookmark)
             postsListFragment.onPostBookmarkedChange(post)
+
+            if (::postsBookmarkFragment.isInitialized)
+                postsBookmarkFragment.onPostBookmarkedChange(post)
             return true
         }
         return false
