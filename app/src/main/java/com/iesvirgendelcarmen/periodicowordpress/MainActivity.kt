@@ -114,6 +114,9 @@ class MainActivity :    AppCompatActivity(),
         if (imageDetailFragment == null)
             showActionBar()
 
+        if (!::postsBookmarkFragment.isInitialized || postsBookmarkFragment == null || !postsBookmarkFragment.isVisible)
+            unlockDrawerLayout()
+
         postsListFragment.onBackPressed()
 
         if (drawerLayout.isDrawerOpen(GravityCompat.START))
