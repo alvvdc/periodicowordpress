@@ -91,11 +91,6 @@ class PostDetailFragment : Fragment() {
         }
     }
 
-    override fun onDestroyView() {
-        drawerLayoutLock.unlockDrawerLayout()
-        super.onDestroyView()
-    }
-
     private fun setBookmarks() {
         if (bookmarkPostListener.isPostBookmarked(post)) setImageBookmarked()
         else setImageNonBookmarked()
