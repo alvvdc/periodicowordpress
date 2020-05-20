@@ -1,14 +1,18 @@
 package com.iesvirgendelcarmen.periodicowordpress
 
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Observer
@@ -37,7 +41,9 @@ class MainActivity :    AppCompatActivity(),
                         ImageDetailListener,
                         CloseFragmentListener,
                         BottomNavigationListener,
-                        DrawerLayoutLock {
+                        DrawerLayoutLock,
+                        AppVersionRequest,
+                        OpenWebPageRequest {
 
 
     private var bookmarks = mutableListOf<Bookmark>()
@@ -86,6 +92,16 @@ class MainActivity :    AppCompatActivity(),
         startPostListFragment(savedInstanceState)
 
         setCategoriesRecyclerView()
+
+        val infoImageView = findViewById<ImageView>(R.id.info)
+        infoImageView.setOnClickListener {
+            drawerLayout.closeDrawer(GravityCompat.START)
+
+            supportFragmentManager.beginTransaction()
+                .add(R.id.container, InfoFragment())
+                .addToBackStack(null)
+                .commit()
+        }
     }
 
     override fun onStart() {
@@ -256,6 +272,24 @@ class MainActivity :    AppCompatActivity(),
         toolbarRelativeLayout.visibility = View.GONE
     }
 
+    private fun getAppVersionCode(): Int {
+        val packageInfo = packageManager.getPackageInfo(packageName, 0)
+        return packageInfo.versionCode
+    }
+
+    private fun getAppVersionName(): String {
+        val packageInfo = packageManager.getPackageInfo(packageName, 0)
+        return packageInfo.versionName
+    }
+
+    private fun openWebPage(url: String) {
+        val webpage: Uri = Uri.parse(url)
+        val intent = Intent(Intent.ACTION_VIEW, webpage)
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivity(intent)
+        }
+    }
+
     //
 
     override fun onClickMenuCategory(category: MenuCategory) {
@@ -338,6 +372,12 @@ class MainActivity :    AppCompatActivity(),
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
+
+    override fun getVersionCode() = getAppVersionCode()
+
+    override fun getVersionName() = getAppVersionName()
+
+    override fun openWebPageFromRequest(url: String)= openWebPage(url)
 }
 
 interface SharePostListener {
@@ -356,4 +396,13 @@ interface CloseFragmentListener {
 interface DrawerLayoutLock {
     fun lockDrawerLayout()
     fun unlockDrawerLayout()
+}
+
+interface AppVersionRequest {
+    fun getVersionCode(): Int
+    fun getVersionName(): String
+}
+
+interface OpenWebPageRequest {
+    fun openWebPageFromRequest(url: String)
 }
