@@ -16,6 +16,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.gms.ads.formats.UnifiedNativeAd
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.iesvirgendelcarmen.periodicowordpress.*
 import com.iesvirgendelcarmen.periodicowordpress.config.Endpoint
@@ -29,6 +30,8 @@ import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PaginationViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PostBoViewModel
 
 
+var adPosition = 0
+
 class PostsListFragment :   Fragment(),
                             SwipeRefreshLayout.OnRefreshListener,
                             BottomNavigationView.OnNavigationItemSelectedListener,
@@ -36,12 +39,14 @@ class PostsListFragment :   Fragment(),
                             SetCategoryListener,
                             CategoryLoadListener,
                             BookmarkChangeListener,
-                            BackPress {
+                            BackPress,
+                            UnifiedNativeAdLoaded {
 
 
 
     private var status = MainActivity.LOAD_HOME
     private var categories = emptyList<MenuCategory>()
+    private var adsList = mutableListOf<UnifiedNativeAd>()
 
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var bottomNavigation: BottomNavigationView
@@ -56,6 +61,8 @@ class PostsListFragment :   Fragment(),
     private lateinit var bottomNavigationListener: BottomNavigationListener
     private lateinit var drawerLayoutLock: DrawerLayoutLock
     private lateinit var paginationStatus: PaginationStatus
+    private lateinit var unifiedNativeAdsListInterface: UnifiedNativeAdsList
+    private lateinit var loadMoreAdsInterface: LoadMoreAds
 
     private val postViewModel by lazy {
         ViewModelProvider(this).get(PostBoViewModel::class.java)
@@ -76,12 +83,15 @@ class PostsListFragment :   Fragment(),
         bookmarkPostListener = context as BookmarkPostListener
         bottomNavigationListener = context as BottomNavigationListener
         drawerLayoutLock = context as DrawerLayoutLock
+        unifiedNativeAdsListInterface = context as UnifiedNativeAdsList
+        loadMoreAdsInterface = context as LoadMoreAds
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.status = arguments?.getInt(MainActivity.STATUS_KEY, MainActivity.LOAD_HOME)!!
         paginationStatus = paginationViewModel.paginationStatus
+        //adsList = unifiedNativeAdsListInterface.getUnifiedNativeAdsListFromActivity().toMutableList()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -214,6 +224,15 @@ class PostsListFragment :   Fragment(),
 
         if (posts.size < Endpoint.DEFAULT_PER_PAGE)
             paginationStatus.isListEnded = true
+        else if (adsList.size > 0 && adPosition < adsList.size) {
+            postsListRecyclerViewAdapter.postsList.add(adsList[adPosition])
+            adPosition++
+        }
+        else if (adPosition >= adsList.size) {
+            if (recyclerView.scrollState == RecyclerView.SCROLL_STATE_IDLE) {
+                loadMoreAdsInterface.loadMoreAdsRequest()
+            }
+        }
 
         swipeRefresh.isRefreshing = false
         paginationStatus.isLoading = false
@@ -278,6 +297,11 @@ class PostsListFragment :   Fragment(),
         if (!isBookmarkLoadEnabled())
             bottomNavigation.checkItem(R.id.home)
     }
+
+    override fun onUnifiedNativeAdLoaded(unifiedNativeAd: UnifiedNativeAd) {
+        //adsList = unifiedNativeAdsListInterface.getUnifiedNativeAdsListFromActivity().toMutableList()
+        adsList.add(unifiedNativeAd)
+    }
 }
 
 //
@@ -302,6 +326,10 @@ interface BottomNavigationListener {
 
 interface BackPress {
     fun onBackPressed()
+}
+
+interface UnifiedNativeAdLoaded {
+    fun onUnifiedNativeAdLoaded(unifiedNativeAd: UnifiedNativeAd)
 }
 
 //

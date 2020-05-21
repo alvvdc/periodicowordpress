@@ -10,4 +10,5 @@
     <string name="close">CLOSE</string>
     <string name="loadingCategoriesError">Error cargando las categorías</string>
     <string name="homeCategory">INICIO</string>
+    <string name="ad_attribution">Ad</string>
 </resources>
