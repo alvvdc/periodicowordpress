@@ -122,7 +122,7 @@ class PostsListFragment :   Fragment(),
     }
 
     override fun onDestroyView() {
-        if (isBookmarkLoadEnabled())
+        if (isBookmarkLoadEnabled() || isTrendingLoadEnabled())
             drawerLayoutLock.unlockDrawerLayout()
 
         super.onDestroyView()
@@ -259,12 +259,17 @@ class PostsListFragment :   Fragment(),
                 }
             })
 
+        } else if (isTrendingLoadEnabled()) {
+            bottomNavigation.checkItem(R.id.trending)
+            postViewModel.getPosts(popularPosts = true)
         } else {
             postViewModel.getPosts()
         }
     }
 
     private fun isBookmarkLoadEnabled() = status == MainActivity.LOAD_BOOKMARKS
+
+    private fun isTrendingLoadEnabled() = status == MainActivity.LOAD_TRENDING
 
     private fun BottomNavigationView.checkItem(actionId: Int) {
         menu.findItem(actionId)?.isChecked = true

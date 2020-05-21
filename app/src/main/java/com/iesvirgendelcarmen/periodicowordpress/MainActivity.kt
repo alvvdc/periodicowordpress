@@ -76,6 +76,7 @@ class MainActivity :    AppCompatActivity(),
         const val STATUS_KEY = "STATUS"
         const val LOAD_HOME = 0
         const val LOAD_BOOKMARKS = 1
+        const val LOAD_TRENDING = 2
 
         const val MAIN_CATEGORY_ID = -1
 
@@ -292,6 +293,20 @@ class MainActivity :    AppCompatActivity(),
             .commit()
     }
 
+    private fun startTrendingListFragment() {
+        val bundle = Bundle()
+        bundle.putInt(STATUS_KEY, LOAD_TRENDING)
+
+        postsBookmarkFragment = PostsListFragment()
+        postsBookmarkFragment.arguments = bundle
+        postsBookmarkFragment.onCategoriesLoaded(menuCategoriesList)
+
+        supportFragmentManager.beginTransaction()
+            .add(R.id.container, postsBookmarkFragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
     private fun showActionBar() {
         supportActionBar?.show()
         toolbarRelativeLayout.visibility = View.VISIBLE
@@ -386,7 +401,7 @@ class MainActivity :    AppCompatActivity(),
     }
 
     override fun onBottomNavigationTrendingSelected() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        startTrendingListFragment()
     }
 
     override fun onBottomNavigationBookmarkSelected() {

@@ -32,7 +32,7 @@ object PostBoRepositoryVolley {
         })
     }
 
-    fun readPostsBo(callback: PostBoCallback.ListPostBO, page: Int = 1, category: Int = -1, posts: Array<Int>? = null) {
+    fun readPostsBo(callback: PostBoCallback.ListPostBO, page: Int = 1, category: Int = -1, posts: Array<Int>? = null, popularPosts: Boolean) {
         getPostsBO(object: PostBoCallback.ListPostBO {
             override fun onResponse(postsBO: List<PostBO>) {
                 callback.onResponse(postsBO)
@@ -45,7 +45,7 @@ object PostBoRepositoryVolley {
             override fun onLoading() {
                 callback.onLoading()
             }
-        }, page, category, posts)
+        }, page, category, posts, popularPosts)
     }
 
 
@@ -69,7 +69,7 @@ object PostBoRepositoryVolley {
     }
 
 
-    private fun getPostsBO(callback: PostBoCallback.ListPostBO, page: Int = 1, category: Int = -1, posts: Array<Int>? = null) {
+    private fun getPostsBO(callback: PostBoCallback.ListPostBO, page: Int = 1, category: Int = -1, posts: Array<Int>? = null, popularPosts: Boolean) {
         callback.onLoading()
         VolleySingleton.getInstance().requestQueue
 
@@ -81,12 +81,20 @@ object PostBoRepositoryVolley {
             postsIds = stringBuilder.toString()
         }
 
-        val URL = if (category == -1 && posts == null)
-            Endpoint.POSTS_URL + Endpoint.PER_PAGE + Endpoint.DEFAULT_PER_PAGE.toString() + Endpoint.PAGE + page.toString()
-        else if (category == -1 && posts != null)
-            Endpoint.POSTS_URL + Endpoint.PER_PAGE + Endpoint.DEFAULT_PER_PAGE.toString() + Endpoint.PAGE + page.toString() + Endpoint.INCLUDE + postsIds
+        var URL = ""
+        if (popularPosts)
+        {
+            URL = Endpoint.POPULAR_POSTS_URL
+        }
         else
-            Endpoint.POSTS_URL + Endpoint.PER_PAGE + Endpoint.DEFAULT_PER_PAGE.toString() + Endpoint.PAGE + page.toString() + Endpoint.CATEGORIES_OPTION + category
+        {
+            URL = if (category == -1 && posts == null)
+                Endpoint.POSTS_URL + Endpoint.PER_PAGE + Endpoint.DEFAULT_PER_PAGE.toString() + Endpoint.PAGE + page.toString()
+            else if (category == -1 && posts != null)
+                Endpoint.POSTS_URL + Endpoint.PER_PAGE + Endpoint.DEFAULT_PER_PAGE.toString() + Endpoint.PAGE + page.toString() + Endpoint.INCLUDE + postsIds
+            else
+                Endpoint.POSTS_URL + Endpoint.PER_PAGE + Endpoint.DEFAULT_PER_PAGE.toString() + Endpoint.PAGE + page.toString() + Endpoint.CATEGORIES_OPTION + category
+        }
 
         Log.d("ALVARO", URL)
 
