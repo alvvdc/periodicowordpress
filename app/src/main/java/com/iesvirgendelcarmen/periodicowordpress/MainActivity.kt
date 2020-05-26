@@ -1,7 +1,6 @@
 package com.iesvirgendelcarmen.periodicowordpress
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -11,19 +10,19 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.Toast
-import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.appcompat.app.AlertDialog
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.gms.ads.AdLoader
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.formats.UnifiedNativeAd
+import com.appodeal.ads.Appodeal
+import com.appodeal.ads.NativeAd
+import com.appodeal.ads.NativeCallbacks
+import com.appodeal.ads.native_ad.views.NativeAdViewContentStream
 import com.iesvirgendelcarmen.periodicowordpress.config.CategoryColor
 import com.iesvirgendelcarmen.periodicowordpress.model.Resource
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MediaBO
@@ -49,13 +48,11 @@ class MainActivity :    AppCompatActivity(),
                         DrawerLayoutLock,
                         AppVersionRequest,
                         OpenWebPageRequest,
-                        UnifiedNativeAdsList,
-                        LoadMoreAds {
+                        AppodealCache {
 
 
     private var bookmarks = mutableListOf<Bookmark>()
     private var menuCategoriesList = listOf<MenuCategory>()
-    private val unifiedNativeAdsList = mutableListOf<UnifiedNativeAd>()
 
     lateinit var postsListFragment: PostsListFragment
     lateinit var categoriesRecyclerView: RecyclerView
@@ -112,27 +109,12 @@ class MainActivity :    AppCompatActivity(),
                 .commit()
         }
 
-        MobileAds.initialize(this) {}
-    }
 
-    private fun loadUnifiedNativeAds() {
-        lateinit var adLoader: AdLoader
-        adLoader = AdLoader.Builder(this, "ca-app-pub-3940256099942544/2247696110")
-            .forUnifiedNativeAd { unifiedNativeAd ->
+        Appodeal.disableLocationPermissionCheck()
+        Appodeal.setTesting(true)
 
-                if (isDestroyed) {
-                    unifiedNativeAd.destroy()
-                    return@forUnifiedNativeAd
-                }
-
-                if (!adLoader.isLoading) {
-                    unifiedNativeAdsList.add(unifiedNativeAd)
-                    postsListFragment.onUnifiedNativeAdLoaded(unifiedNativeAd)
-                }
-            }
-            .build()
-
-        adLoader.loadAds(AdRequest.Builder().build(), 5)
+        Appodeal.initialize(this, "932102fd93a91d111426d3ad1ecefb0aadcbf12bd2478367", Appodeal.NATIVE, false)
+        Appodeal.cache(this, Appodeal.NATIVE)
     }
 
     override fun onStart() {
@@ -424,13 +406,7 @@ class MainActivity :    AppCompatActivity(),
 
     override fun openWebPageFromRequest(url: String)= openWebPage(url)
 
-    override fun getUnifiedNativeAdsListFromActivity(): List<UnifiedNativeAd> {
-        return unifiedNativeAdsList
-    }
-
-    override fun loadMoreAdsRequest() {
-        loadUnifiedNativeAds()
-    }
+    override fun appodealCacheRequest() = Appodeal.cache(this, Appodeal.NATIVE)
 }
 
 interface SharePostListener {
@@ -460,10 +436,6 @@ interface OpenWebPageRequest {
     fun openWebPageFromRequest(url: String)
 }
 
-interface UnifiedNativeAdsList {
-    fun getUnifiedNativeAdsListFromActivity(): List<UnifiedNativeAd>
-}
-
-interface LoadMoreAds {
-    fun loadMoreAdsRequest()
+interface AppodealCache {
+    fun appodealCacheRequest()
 }

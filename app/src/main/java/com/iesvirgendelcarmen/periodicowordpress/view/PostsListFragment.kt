@@ -3,7 +3,6 @@ package com.iesvirgendelcarmen.periodicowordpress.view
 import android.content.Context
 import android.graphics.Rect
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
@@ -16,7 +15,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.gms.ads.formats.UnifiedNativeAd
+import com.appodeal.ads.NativeAd
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.iesvirgendelcarmen.periodicowordpress.*
 import com.iesvirgendelcarmen.periodicowordpress.config.Endpoint
@@ -39,14 +38,13 @@ class PostsListFragment :   Fragment(),
                             SetCategoryListener,
                             CategoryLoadListener,
                             BookmarkChangeListener,
-                            BackPress,
-                            UnifiedNativeAdLoaded {
+                            BackPress {
 
 
 
     private var status = MainActivity.LOAD_HOME
     private var categories = emptyList<MenuCategory>()
-    private var adsList = mutableListOf<UnifiedNativeAd>()
+    private var adsList = mutableListOf<List<NativeAd>>()
 
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var bottomNavigation: BottomNavigationView
@@ -61,8 +59,7 @@ class PostsListFragment :   Fragment(),
     private lateinit var bottomNavigationListener: BottomNavigationListener
     private lateinit var drawerLayoutLock: DrawerLayoutLock
     private lateinit var paginationStatus: PaginationStatus
-    private lateinit var unifiedNativeAdsListInterface: UnifiedNativeAdsList
-    private lateinit var loadMoreAdsInterface: LoadMoreAds
+    private lateinit var appodealCache: AppodealCache
 
     private val postViewModel by lazy {
         ViewModelProvider(this).get(PostBoViewModel::class.java)
@@ -83,15 +80,13 @@ class PostsListFragment :   Fragment(),
         bookmarkPostListener = context as BookmarkPostListener
         bottomNavigationListener = context as BottomNavigationListener
         drawerLayoutLock = context as DrawerLayoutLock
-        unifiedNativeAdsListInterface = context as UnifiedNativeAdsList
-        loadMoreAdsInterface = context as LoadMoreAds
+        appodealCache = context as AppodealCache
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.status = arguments?.getInt(MainActivity.STATUS_KEY, MainActivity.LOAD_HOME)!!
         paginationStatus = paginationViewModel.paginationStatus
-        //adsList = unifiedNativeAdsListInterface.getUnifiedNativeAdsListFromActivity().toMutableList()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -103,6 +98,7 @@ class PostsListFragment :   Fragment(),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setRecyclerView(view)
+
 
         swipeRefresh = view.findViewById(R.id.swipeRefresh)
         swipeRefresh.setOnRefreshListener(this)
@@ -174,6 +170,7 @@ class PostsListFragment :   Fragment(),
         recyclerView = view.findViewById(R.id.recyclerView)
         postsListRecyclerViewAdapter = PostsListRecyclerViewAdapter(postListListener, sharePostListener, bookmarkPostListener)
         postsListRecyclerViewAdapter.menuCategoriesList = categories
+        postsListRecyclerViewAdapter.appodealCache = appodealCache
         val linearLayoutManager = NpaLinearLayoutManager(context)
 
         recyclerView.apply {
@@ -230,7 +227,7 @@ class PostsListFragment :   Fragment(),
         }
         else if (adPosition >= adsList.size) {
             if (recyclerView.scrollState == RecyclerView.SCROLL_STATE_IDLE) {
-                loadMoreAdsInterface.loadMoreAdsRequest()
+                adsList.add(emptyList())
             }
         }
 
@@ -302,11 +299,6 @@ class PostsListFragment :   Fragment(),
         if (!isBookmarkLoadEnabled())
             bottomNavigation.checkItem(R.id.home)
     }
-
-    override fun onUnifiedNativeAdLoaded(unifiedNativeAd: UnifiedNativeAd) {
-        //adsList = unifiedNativeAdsListInterface.getUnifiedNativeAdsListFromActivity().toMutableList()
-        adsList.add(unifiedNativeAd)
-    }
 }
 
 //
@@ -331,10 +323,6 @@ interface BottomNavigationListener {
 
 interface BackPress {
     fun onBackPressed()
-}
-
-interface UnifiedNativeAdLoaded {
-    fun onUnifiedNativeAdLoaded(unifiedNativeAd: UnifiedNativeAd)
 }
 
 //
