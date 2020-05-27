@@ -48,7 +48,8 @@ class MainActivity :    AppCompatActivity(),
                         DrawerLayoutLock,
                         AppVersionRequest,
                         OpenWebPageRequest,
-                        AppodealCache {
+                        AppodealCache,
+                        AppodealView {
 
 
     private var bookmarks = mutableListOf<Bookmark>()
@@ -113,7 +114,9 @@ class MainActivity :    AppCompatActivity(),
         Appodeal.disableLocationPermissionCheck()
         Appodeal.setTesting(true)
 
-        Appodeal.initialize(this, "932102fd93a91d111426d3ad1ecefb0aadcbf12bd2478367", Appodeal.NATIVE, false)
+        Appodeal.setBannerViewId(R.id.banner_ad_view)
+
+        Appodeal.initialize(this, "932102fd93a91d111426d3ad1ecefb0aadcbf12bd2478367", Appodeal.NATIVE or Appodeal.BANNER, false)
         Appodeal.cache(this, Appodeal.NATIVE)
     }
 
@@ -259,6 +262,8 @@ class MainActivity :    AppCompatActivity(),
             R.id.container,
             postDetailFragment
         ).addToBackStack(null).commit()
+
+        Appodeal.show(this, Appodeal.BANNER_VIEW)
     }
 
     private fun startBookmarkListFragment() {
@@ -407,6 +412,8 @@ class MainActivity :    AppCompatActivity(),
     override fun openWebPageFromRequest(url: String)= openWebPage(url)
 
     override fun appodealCacheRequest() = Appodeal.cache(this, Appodeal.NATIVE)
+
+    override fun showAppodealBannerView() = Appodeal.show(this, Appodeal.BANNER_VIEW)
 }
 
 interface SharePostListener {
@@ -438,4 +445,8 @@ interface OpenWebPageRequest {
 
 interface AppodealCache {
     fun appodealCacheRequest()
+}
+
+interface AppodealView {
+    fun showAppodealBannerView(): Boolean
 }
