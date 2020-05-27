@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.gms.ads.formats.UnifiedNativeAd
 import com.iesvirgendelcarmen.periodicowordpress.config.CategoryColor
 import com.iesvirgendelcarmen.periodicowordpress.model.Resource
@@ -37,6 +38,7 @@ import com.iesvirgendelcarmen.periodicowordpress.viewmodel.BookmarkViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.wordpress.CategoryViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_posts_list.*
+import java.util.*
 
 class MainActivity :    AppCompatActivity(),
                         MenuCategoryListener,
@@ -85,6 +87,7 @@ class MainActivity :    AppCompatActivity(),
         const val COLOR_KEY = "COLOR"
         const val POST_KEY = "POST"
 
+        const val NATIVE_AD_ID = "ca-app-pub-5913405897522310/7079949178"
         const val NATIVE_AD_TEST_ID = "ca-app-pub-3940256099942544/2247696110"
     }
 
@@ -132,7 +135,8 @@ class MainActivity :    AppCompatActivity(),
             }
             .build()
 
-        adLoader.loadAd(AdRequest.Builder().build())
+        val adRequest = AdRequest.Builder().build()
+        adLoader.loadAd(adRequest)
     }
 
     override fun onStart() {

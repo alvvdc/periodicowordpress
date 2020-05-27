@@ -17,6 +17,8 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
 import com.iesvirgendelcarmen.periodicowordpress.BookmarkPostListener
 import com.iesvirgendelcarmen.periodicowordpress.DrawerLayoutLock
 
@@ -89,6 +91,10 @@ class PostDetailFragment : Fragment() {
         featuredImageConstraintLayout.setOnClickListener {
             imageDetailListener.onImageClickListener(post.featuredMedia)
         }
+
+        val mAdView = view.findViewById<AdView>(R.id.adView)
+        val adRequest = AdRequest.Builder().build()
+        mAdView.loadAd(adRequest)
     }
 
     private fun setBookmarks() {
