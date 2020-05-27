@@ -1,5 +1,7 @@
 package com.iesvirgendelcarmen.periodicowordpress.view
 
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.text.Html
 import android.util.Log
@@ -16,6 +18,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.google.android.ads.nativetemplates.NativeTemplateStyle
+import com.google.android.ads.nativetemplates.TemplateView
 import com.google.android.gms.ads.formats.MediaView
 import com.google.android.gms.ads.formats.UnifiedNativeAd
 import com.google.android.gms.ads.formats.UnifiedNativeAdView
@@ -65,73 +69,17 @@ class PostsListRecyclerViewAdapter(
         if (post is PostBO)
             (holder as PostViewHolder).bind(post)
         else
-            populateNativeAdView(post as UnifiedNativeAd, (holder as AdViewHolder).adView)
-    }
-
-    private fun populateNativeAdView(nativeAd: UnifiedNativeAd, adView: UnifiedNativeAdView) {
-        // Some assets are guaranteed to be in every UnifiedNativeAd.
-        (adView.headlineView as TextView).text = nativeAd.headline
-        (adView.bodyView as TextView).text = nativeAd.body
-        (adView.callToActionView as Button).text = nativeAd.callToAction
-
-        // These assets aren't guaranteed to be in every UnifiedNativeAd, so it's important to
-        // check before trying to display them.
-        val icon = nativeAd.icon
-        if (icon == null) {
-            adView.iconView.visibility = View.INVISIBLE
-        } else {
-            (adView.iconView as ImageView).setImageDrawable(icon.drawable)
-            adView.iconView.visibility = View.VISIBLE
-        }
-        if (nativeAd.price == null) {
-            adView.priceView.visibility = View.INVISIBLE
-        } else {
-            adView.priceView.visibility = View.VISIBLE
-            (adView.priceView as TextView).text = nativeAd.price
-        }
-        if (nativeAd.store == null) {
-            adView.storeView.visibility = View.INVISIBLE
-        } else {
-            adView.storeView.visibility = View.VISIBLE
-            (adView.storeView as TextView).text = nativeAd.store
-        }
-        if (nativeAd.starRating == null) {
-            adView.starRatingView.visibility = View.INVISIBLE
-        } else {
-            (adView.starRatingView as RatingBar).rating = nativeAd.starRating.toFloat()
-            adView.starRatingView.visibility = View.VISIBLE
-        }
-        if (nativeAd.advertiser == null) {
-            adView.advertiserView.visibility = View.INVISIBLE
-        } else {
-            (adView.advertiserView as TextView).text = nativeAd.advertiser
-            adView.advertiserView.visibility = View.VISIBLE
-        }
-        // Assign native ad object to the native view.
-        adView.setNativeAd(nativeAd)
+            (holder as AdViewHolder).bind(post as UnifiedNativeAd)
     }
 
     inner class AdViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
 
-        val adView: UnifiedNativeAdView = itemView.findViewById(R.id.ad_view)
+        private val adView: TemplateView = itemView.findViewById(R.id.adTemplate)
 
-        init {
-            // The MediaView will display a video asset if one is present in the ad, and the
-            // first image asset otherwise.
-            // The MediaView will display a video asset if one is present in the ad, and the
-            // first image asset otherwise.
-            adView.setMediaView(adView.findViewById<android.view.View?>(R.id.ad_media) as MediaView?)
-
-            // Register the view used for each individual asset.
-            // Register the view used for each individual asset.
-            adView.setHeadlineView(adView.findViewById<android.view.View?>(R.id.ad_headline))
-            adView.setBodyView(adView.findViewById<android.view.View?>(R.id.ad_body))
-            adView.setCallToActionView(adView.findViewById<android.view.View?>(R.id.ad_call_to_action))
-            adView.setIconView(adView.findViewById<android.view.View?>(R.id.ad_icon))
-            adView.setPriceView(adView.findViewById<android.view.View?>(R.id.ad_price))
-            adView.setStarRatingView(adView.findViewById<android.view.View?>(R.id.ad_stars))
-            adView.setStoreView(adView.findViewById<android.view.View?>(R.id.ad_store))
-            adView.setAdvertiserView(adView.findViewById<android.view.View?>(R.id.ad_advertiser))
+        fun bind(nativeAd: UnifiedNativeAd) {
+            val styles = NativeTemplateStyle.Builder().withMainBackgroundColor(ColorDrawable(Color.WHITE)).build()
+            adView.setStyles(styles)
+            adView.setNativeAd(nativeAd)
         }
     }
 

@@ -1,2 +1,2 @@
 rootProject.name='PeriodicoWordpress'
-include ':app'
+include ':app', ':nativetemplates'
