@@ -26,7 +26,7 @@
             android:resource="@array/preloaded_fonts" />
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-5913405897522310~8996214814"/>
+            android:value="ca-app-pub-5913405897522310~6887537164"/>
     </application>
 
 </manifest>

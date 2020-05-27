@@ -82,6 +82,8 @@ class MainActivity :    AppCompatActivity(),
 
         const val COLOR_KEY = "COLOR"
         const val POST_KEY = "POST"
+
+        const val APPODEAL_KEY = "932102fd93a91d111426d3ad1ecefb0aadcbf12bd2478367"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -116,7 +118,7 @@ class MainActivity :    AppCompatActivity(),
 
         Appodeal.setBannerViewId(R.id.banner_ad_view)
 
-        Appodeal.initialize(this, "932102fd93a91d111426d3ad1ecefb0aadcbf12bd2478367", Appodeal.NATIVE or Appodeal.BANNER, false)
+        Appodeal.initialize(this, APPODEAL_KEY, Appodeal.NATIVE or Appodeal.BANNER, false)
         Appodeal.cache(this, Appodeal.NATIVE)
     }
 
