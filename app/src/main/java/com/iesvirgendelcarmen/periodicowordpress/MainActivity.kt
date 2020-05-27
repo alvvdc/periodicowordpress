@@ -84,6 +84,8 @@ class MainActivity :    AppCompatActivity(),
 
         const val COLOR_KEY = "COLOR"
         const val POST_KEY = "POST"
+
+        const val NATIVE_AD_TEST_ID = "ca-app-pub-3940256099942544/2247696110"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,7 +119,7 @@ class MainActivity :    AppCompatActivity(),
 
     private fun loadUnifiedNativeAds() {
         lateinit var adLoader: AdLoader
-        adLoader = AdLoader.Builder(this, "ca-app-pub-3940256099942544/2247696110")
+        adLoader = AdLoader.Builder(this, NATIVE_AD_TEST_ID)
             .forUnifiedNativeAd { unifiedNativeAd ->
 
                 if (isDestroyed) {
@@ -125,14 +127,12 @@ class MainActivity :    AppCompatActivity(),
                     return@forUnifiedNativeAd
                 }
 
-                if (!adLoader.isLoading) {
-                    unifiedNativeAdsList.add(unifiedNativeAd)
-                    postsListFragment.onUnifiedNativeAdLoaded(unifiedNativeAd)
-                }
+                unifiedNativeAdsList.add(unifiedNativeAd)
+                postsListFragment.onUnifiedNativeAdLoaded(unifiedNativeAd)
             }
             .build()
 
-        adLoader.loadAds(AdRequest.Builder().build(), 5)
+        adLoader.loadAd(AdRequest.Builder().build())
     }
 
     override fun onStart() {
