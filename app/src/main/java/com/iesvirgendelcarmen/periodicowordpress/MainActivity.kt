@@ -1,12 +1,15 @@
 package com.iesvirgendelcarmen.periodicowordpress
 
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
+import android.view.Window
+import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.Toast
@@ -103,6 +106,11 @@ class MainActivity :    AppCompatActivity(),
                 .addToBackStack(null)
                 .commit()
         }
+
+        val window: Window = window
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        window.statusBarColor = Color.parseColor("#3c918c")
     }
 
     override fun onStart() {
