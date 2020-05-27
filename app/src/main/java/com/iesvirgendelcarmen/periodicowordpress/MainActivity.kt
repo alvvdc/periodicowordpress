@@ -264,8 +264,6 @@ class MainActivity :    AppCompatActivity(),
             R.id.container,
             postDetailFragment
         ).addToBackStack(null).commit()
-
-        Appodeal.show(this, Appodeal.BANNER_VIEW)
     }
 
     private fun startBookmarkListFragment() {
