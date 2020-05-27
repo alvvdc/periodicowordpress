@@ -15,7 +15,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.appodeal.ads.Appodeal
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -51,7 +50,6 @@ class PostDetailFragment : Fragment() {
     private lateinit var bookmarkPostListener: BookmarkPostListener
     private lateinit var imageDetailListener: ImageDetailListener
     private lateinit var drawerLayoutLock: DrawerLayoutLock
-    private lateinit var appodealView: AppodealView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,7 +63,6 @@ class PostDetailFragment : Fragment() {
         bookmarkPostListener = context as BookmarkPostListener
         imageDetailListener = context as ImageDetailListener
         drawerLayoutLock = context as DrawerLayoutLock
-        appodealView = context as AppodealView
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -90,8 +87,6 @@ class PostDetailFragment : Fragment() {
         featuredImageConstraintLayout.setOnClickListener {
             imageDetailListener.onImageClickListener(post.featuredMedia)
         }
-
-        appodealView.showAppodealBannerView()
     }
 
     private fun setBookmarks() {

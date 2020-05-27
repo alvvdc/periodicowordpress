@@ -12,10 +12,6 @@ import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
-import com.appodeal.ads.Appodeal
-import com.appodeal.ads.native_ad.views.NativeAdViewAppWall
-import com.appodeal.ads.native_ad.views.NativeAdViewContentStream
-import com.appodeal.ads.native_ad.views.NativeAdViewNewsFeed
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -31,11 +27,9 @@ class PostsListRecyclerViewAdapter(
     val postListListener: PostListListener,
     var sharePostListener: SharePostListener,
     var bookmarkPostListener: BookmarkPostListener,
-    var postsList: MutableList<Any> = mutableListOf(),
+    var postsList: MutableList<PostBO> = mutableListOf(),
     var menuCategoriesList: List<MenuCategory> = emptyList()
-): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-
-    var appodealCache: AppodealCache? = null
+): RecyclerView.Adapter<PostsListRecyclerViewAdapter.PostViewHolder>() {
 
     companion object {
         const val POST_VIEW_TYPE = 0
@@ -50,38 +44,14 @@ class PostsListRecyclerViewAdapter(
         return if (postsList[position] is PostBO) POST_VIEW_TYPE else AD_VIEW_TYPE
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return if (viewType == POST_VIEW_TYPE) {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.post_list_element, parent, false)
-            PostViewHolder(view)
-        } else {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.ad_list_element, parent, false)
-            AdViewHolder(view)
-        }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.post_list_element, parent, false)
+        return PostViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         val post = postsList[position]
-
-        if (post is PostBO)
-            (holder as PostViewHolder).bind(post)
-        else
-            (holder as AdViewHolder).bind()
-    }
-
-    inner class AdViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
-
-        private val adView: NativeAdViewContentStream = itemView.findViewById(R.id.native_ad_view)
-
-        fun bind() {
-            try {
-                val nativeAd = Appodeal.getNativeAds(1)[0]
-                adView.setNativeAd(nativeAd)
-                appodealCache?.appodealCacheRequest()
-            } catch (e: Exception) {
-                Log.e("ALVARO", "No se ha recibido el anuncio a tiempo")
-            }
-        }
+        holder.bind(post)
     }
 
     inner class PostViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {

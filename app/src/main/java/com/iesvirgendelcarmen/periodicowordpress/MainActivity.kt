@@ -19,10 +19,6 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.appodeal.ads.Appodeal
-import com.appodeal.ads.NativeAd
-import com.appodeal.ads.NativeCallbacks
-import com.appodeal.ads.native_ad.views.NativeAdViewContentStream
 import com.iesvirgendelcarmen.periodicowordpress.config.CategoryColor
 import com.iesvirgendelcarmen.periodicowordpress.model.Resource
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MediaBO
@@ -47,9 +43,7 @@ class MainActivity :    AppCompatActivity(),
                         BottomNavigationListener,
                         DrawerLayoutLock,
                         AppVersionRequest,
-                        OpenWebPageRequest,
-                        AppodealCache,
-                        AppodealView {
+                        OpenWebPageRequest {
 
 
     private var bookmarks = mutableListOf<Bookmark>()
@@ -82,8 +76,6 @@ class MainActivity :    AppCompatActivity(),
 
         const val COLOR_KEY = "COLOR"
         const val POST_KEY = "POST"
-
-        const val APPODEAL_KEY = "932102fd93a91d111426d3ad1ecefb0aadcbf12bd2478367"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,15 +103,6 @@ class MainActivity :    AppCompatActivity(),
                 .addToBackStack(null)
                 .commit()
         }
-
-
-        Appodeal.disableLocationPermissionCheck()
-        Appodeal.setTesting(true)
-
-        Appodeal.setBannerViewId(R.id.banner_ad_view)
-
-        Appodeal.initialize(this, APPODEAL_KEY, Appodeal.NATIVE or Appodeal.BANNER, false)
-        Appodeal.cache(this, Appodeal.NATIVE)
     }
 
     override fun onStart() {
@@ -264,8 +247,6 @@ class MainActivity :    AppCompatActivity(),
             R.id.container,
             postDetailFragment
         ).addToBackStack(null).commit()
-
-        Appodeal.show(this, Appodeal.BANNER_VIEW)
     }
 
     private fun startBookmarkListFragment() {
@@ -412,10 +393,6 @@ class MainActivity :    AppCompatActivity(),
     override fun getVersionName() = getAppVersionName()
 
     override fun openWebPageFromRequest(url: String)= openWebPage(url)
-
-    override fun appodealCacheRequest() = Appodeal.cache(this, Appodeal.NATIVE)
-
-    override fun showAppodealBannerView() = Appodeal.show(this, Appodeal.BANNER_VIEW)
 }
 
 interface SharePostListener {
@@ -443,12 +420,4 @@ interface AppVersionRequest {
 
 interface OpenWebPageRequest {
     fun openWebPageFromRequest(url: String)
-}
-
-interface AppodealCache {
-    fun appodealCacheRequest()
-}
-
-interface AppodealView {
-    fun showAppodealBannerView(): Boolean
 }

@@ -15,7 +15,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.appodeal.ads.NativeAd
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.iesvirgendelcarmen.periodicowordpress.*
 import com.iesvirgendelcarmen.periodicowordpress.config.Endpoint
@@ -29,7 +28,6 @@ import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PaginationViewModel
 import com.iesvirgendelcarmen.periodicowordpress.viewmodel.PostBoViewModel
 
 
-var adPosition = 0
 
 class PostsListFragment :   Fragment(),
                             SwipeRefreshLayout.OnRefreshListener,
@@ -44,7 +42,6 @@ class PostsListFragment :   Fragment(),
 
     private var status = MainActivity.LOAD_HOME
     private var categories = emptyList<MenuCategory>()
-    private var adsList = mutableListOf<List<NativeAd>>()
 
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var bottomNavigation: BottomNavigationView
@@ -59,7 +56,6 @@ class PostsListFragment :   Fragment(),
     private lateinit var bottomNavigationListener: BottomNavigationListener
     private lateinit var drawerLayoutLock: DrawerLayoutLock
     private lateinit var paginationStatus: PaginationStatus
-    private lateinit var appodealCache: AppodealCache
 
     private val postViewModel by lazy {
         ViewModelProvider(this).get(PostBoViewModel::class.java)
@@ -80,7 +76,6 @@ class PostsListFragment :   Fragment(),
         bookmarkPostListener = context as BookmarkPostListener
         bottomNavigationListener = context as BottomNavigationListener
         drawerLayoutLock = context as DrawerLayoutLock
-        appodealCache = context as AppodealCache
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -170,7 +165,6 @@ class PostsListFragment :   Fragment(),
         recyclerView = view.findViewById(R.id.recyclerView)
         postsListRecyclerViewAdapter = PostsListRecyclerViewAdapter(postListListener, sharePostListener, bookmarkPostListener)
         postsListRecyclerViewAdapter.menuCategoriesList = categories
-        postsListRecyclerViewAdapter.appodealCache = appodealCache
         val linearLayoutManager = NpaLinearLayoutManager(context)
 
         recyclerView.apply {
@@ -221,15 +215,6 @@ class PostsListFragment :   Fragment(),
 
         if (posts.size < Endpoint.DEFAULT_PER_PAGE)
             paginationStatus.isListEnded = true
-        else if (adsList.size > 0 && adPosition < adsList.size) {
-            postsListRecyclerViewAdapter.postsList.add(adsList[adPosition])
-            adPosition++
-        }
-        else if (adPosition >= adsList.size) {
-            if (recyclerView.scrollState == RecyclerView.SCROLL_STATE_IDLE) {
-                adsList.add(emptyList())
-            }
-        }
 
         swipeRefresh.isRefreshing = false
         paginationStatus.isLoading = false
