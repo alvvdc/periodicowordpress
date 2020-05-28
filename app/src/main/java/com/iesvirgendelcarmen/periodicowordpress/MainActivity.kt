@@ -403,7 +403,7 @@ class MainActivity :    AppCompatActivity(),
     }
 
     override fun onClickCloseFragment() {
-        supportFragmentManager.popBackStack()
+        onBackPressed()
     }
 
     override fun onBottomNavigationHomeSelected() {
