@@ -1,7 +1,8 @@
 package com.iesvirgendelcarmen.periodicowordpress.view
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Html
 import androidx.fragment.app.Fragment
@@ -10,9 +11,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomTarget
-import com.bumptech.glide.request.transition.Transition
 import com.iesvirgendelcarmen.periodicowordpress.CloseFragmentListener
 
 import com.iesvirgendelcarmen.periodicowordpress.R
@@ -50,6 +50,7 @@ class ImageDetailFragment : Fragment() {
         val descriptionTextView = view.findViewById<TextView>(R.id.description)
         val mediaImageView = view.findViewById<ImageView>(R.id.image)
         val closeImageView = view.findViewById<ImageView>(R.id.close)
+        val constraintLayout = view.findViewById<ConstraintLayout>(R.id.constraintLayout)
 
         authorTextView.text = media.author.name.toUpperCase()
         descriptionTextView.text = Html.fromHtml(media.caption.rendered).toString().trim()
@@ -68,5 +69,41 @@ class ImageDetailFragment : Fragment() {
         closeImageView.setOnClickListener {
             closeFragmentListener.onClickCloseFragment()
         }
+
+        val animationDuration = 300L
+        var faded = false
+
+        val animatorListenerAdapterForFadeOut = object: AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator?) {
+                authorTextView.visibility = View.INVISIBLE
+                descriptionTextView.visibility = View.INVISIBLE
+                closeImageView.visibility = View.INVISIBLE
+            }
+        }
+
+        val animatorListenerAdapterForFadeIn = object: AnimatorListenerAdapter() {
+            override fun onAnimationStart(animation: Animator?) {
+                authorTextView.visibility = View.VISIBLE
+                descriptionTextView.visibility = View.VISIBLE
+                closeImageView.visibility = View.VISIBLE
+            }
+        }
+
+        val fadeClickListener = View.OnClickListener {
+            if (faded) {
+                authorTextView.animate().setDuration(animationDuration).alpha(1f).setListener(animatorListenerAdapterForFadeIn)
+                descriptionTextView.animate().setDuration(animationDuration).alpha(1f).setListener(animatorListenerAdapterForFadeIn)
+                closeImageView.animate().setDuration(animationDuration).alpha(1f).setListener(animatorListenerAdapterForFadeIn)
+            }
+            else {
+                authorTextView.animate().setDuration(animationDuration).alpha(0f).setListener(animatorListenerAdapterForFadeOut)
+                descriptionTextView.animate().setDuration(animationDuration).alpha(0f).setListener(animatorListenerAdapterForFadeOut)
+                closeImageView.animate().setDuration(animationDuration).alpha(0f).setListener(animatorListenerAdapterForFadeOut)
+            }
+            faded = !faded
+        }
+
+        constraintLayout.setOnClickListener(fadeClickListener)
+        //mediaImageView.setOnClickListener(fadeClickListener)
     }
 }
