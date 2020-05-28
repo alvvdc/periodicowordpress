@@ -17,6 +17,7 @@ import android.widget.Toast
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Observer
@@ -120,10 +121,7 @@ class MainActivity :    AppCompatActivity(),
                 .commit()
         }
 
-        val window: Window = window
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-        window.statusBarColor = Color.parseColor("#3c918c")
+        setPrimaryStatusBarColor()
 
         MobileAds.initialize(this) {}
     }
@@ -170,8 +168,10 @@ class MainActivity :    AppCompatActivity(),
     override fun onBackPressed() {
         val imageDetailFragment = supportFragmentManager.findFragmentByTag(IMAGE_DETAIL_FRAGMENT_TAG)
 
-        if (imageDetailFragment == null)
+        if (imageDetailFragment == null) {
             showActionBar()
+            setPrimaryStatusBarColor()
+        }
 
         if (!::postsBookmarkFragment.isInitialized || postsBookmarkFragment == null || !postsBookmarkFragment.isVisible)
             unlockDrawerLayout()
@@ -290,6 +290,9 @@ class MainActivity :    AppCompatActivity(),
             .add(R.id.container, postDetailFragment)
             .addToBackStack(null)
             .commit()
+
+        val darkenColor = getDarkenColor(color)
+        setStatusBarColor(darkenColor)
     }
 
     private fun startBookmarkListFragment() {
@@ -346,6 +349,22 @@ class MainActivity :    AppCompatActivity(),
         if (intent.resolveActivity(packageManager) != null) {
             startActivity(intent)
         }
+    }
+
+    private fun setStatusBarColor(color: Int) {
+        val window: Window = window
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        window.statusBarColor = color
+    }
+
+    private fun getDarkenColor(color: Int, ratio: Float = 0.2f): Int {
+        return ColorUtils.blendARGB(color, Color.BLACK, ratio)
+    }
+
+    private fun setPrimaryStatusBarColor() {
+        val darkenPrimaryColor = getDarkenColor(resources.getColor(R.color.colorPrimary))
+        setStatusBarColor(darkenPrimaryColor)
     }
 
     //
