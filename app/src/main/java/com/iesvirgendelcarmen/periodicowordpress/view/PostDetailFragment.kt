@@ -5,15 +5,17 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Html
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.util.Log
+import android.view.*
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -24,11 +26,14 @@ import com.iesvirgendelcarmen.periodicowordpress.DrawerLayoutLock
 
 import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.SharePostListener
+import com.iesvirgendelcarmen.periodicowordpress.*
 import com.iesvirgendelcarmen.periodicowordpress.config.CategoryColor
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MediaBO
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.PostBO
 import java.text.DateFormatSymbols
 import java.util.*
+import kotlin.math.abs
+
 
 class PostDetailFragment : Fragment() {
 
@@ -54,6 +59,7 @@ class PostDetailFragment : Fragment() {
     private lateinit var bookmarkPostListener: BookmarkPostListener
     private lateinit var imageDetailListener: ImageDetailListener
     private lateinit var drawerLayoutLock: DrawerLayoutLock
+    private lateinit var closeFragmentListFragment: CloseFragmentListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,11 +73,44 @@ class PostDetailFragment : Fragment() {
         bookmarkPostListener = context as BookmarkPostListener
         imageDetailListener = context as ImageDetailListener
         drawerLayoutLock = context as DrawerLayoutLock
+        closeFragmentListFragment = context as CloseFragmentListener
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         drawerLayoutLock.lockDrawerLayout()
-        return inflater.inflate(R.layout.fragment_post_detail, container, false)
+
+        val gestureDetector = getSwipeGestureDetector()
+        val view = inflater.inflate(R.layout.fragment_post_detail, container, false)
+        view.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
+
+        return view
+    }
+
+    private fun getSwipeGestureDetector(): GestureDetector {
+        return GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onFling(
+                e1: MotionEvent?,
+                e2: MotionEvent?,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+
+                val SWIPE_MIN_DISTANCE = 120
+                val SWIPE_MAX_OFF_PATH = 250
+                val SWIPE_THRESHOLD_VELOCITY = 200
+
+                try {
+                    if (abs(e1!!.y - e2!!.y) > SWIPE_MAX_OFF_PATH)
+                        return false
+
+                    if (e1.x - e2.x > SWIPE_MIN_DISTANCE && abs(velocityX) > SWIPE_THRESHOLD_VELOCITY)
+                        closeFragmentListFragment.onClickCloseFragment()
+                } catch (e: Exception) {
+                }
+
+                return super.onFling(e1, e2, velocityX, velocityY)
+            }
+        })
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
