@@ -16,11 +16,8 @@ import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.ActionBarDrawerToggle
-<<<<<<< HEAD
 import androidx.appcompat.app.AlertDialog
-=======
 import androidx.core.graphics.ColorUtils
->>>>>>> 16bc28c... Refactorizado el cambio de color del Status Bar.
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Observer
@@ -424,7 +421,7 @@ class MainActivity :    AppCompatActivity(),
     }
 
     override fun onClickCloseFragment() {
-        supportFragmentManager.popBackStack()
+        onBackPressed()
     }
 
     override fun onBottomNavigationHomeSelected() {
