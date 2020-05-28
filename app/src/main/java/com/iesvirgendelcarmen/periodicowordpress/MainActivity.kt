@@ -268,10 +268,11 @@ class MainActivity :    AppCompatActivity(),
         postDetailFragment.arguments = bundle
 
         hideActionBar()
-        supportFragmentManager.beginTransaction().add(
-            R.id.container,
-            postDetailFragment
-        ).addToBackStack(null).commit()
+        supportFragmentManager.beginTransaction()
+            .setCustomAnimations(R.anim.enter_from_left, R.anim.exit_to_right, R.anim.enter_from_right, R.anim.exit_to_left)
+            .add(R.id.container, postDetailFragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun startBookmarkListFragment() {
