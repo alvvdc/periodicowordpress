@@ -3,8 +3,8 @@ package com.iesvirgendelcarmen.periodicowordpress.config
 class Endpoint {
     companion object {
 
-        //private const val BASE_URL = "http://192.168.1.8:8080"
-        private const val BASE_URL = "https://time.com"
+        private const val BASE_URL = "http://192.168.1.8:8080"
+        //private const val BASE_URL = "https://time.com"
         //private const val BASE_URL = "https://newyork.cbslocal.com"
         //private const val BASE_URL = "https://chinadigitaltimes.net"
 
