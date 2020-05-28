@@ -159,12 +159,18 @@ class PostsListFragment :   Fragment(),
 
         paginationStatus.reset()
 
-        if (isBookmarkLoadEnabled()) {
-            bookmarkViewModel.getAll().observe(viewLifecycleOwner, Observer {
-                postViewModel.getPosts(paginationStatus.page, paginationStatus.category, Bookmark.convertListToArray(it))
-            })
-        } else {
-            postViewModel.getPosts(paginationStatus.page, paginationStatus.category)
+        when {
+            isBookmarkLoadEnabled() -> {
+                bookmarkViewModel.getAll().observe(viewLifecycleOwner, Observer {
+                    postViewModel.getPosts(paginationStatus.page, paginationStatus.category, Bookmark.convertListToArray(it))
+                })
+            }
+            isTrendingLoadEnabled() -> {
+                postViewModel.getPosts(popularPosts = true)
+            }
+            else -> {
+                postViewModel.getPosts(paginationStatus.page, paginationStatus.category)
+            }
         }
     }
 
