@@ -14,6 +14,7 @@ import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -234,9 +235,18 @@ class MainActivity :    AppCompatActivity(),
         val imageDetailFragment = ImageDetailFragment()
         imageDetailFragment.arguments = bundle
 
+        val imageViewPostDetail = findViewById<ConstraintLayout>(R.id.featureImage)
+
+        if (imageViewPostDetail == null)
+            return
+
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.container)
+
         supportFragmentManager.beginTransaction()
-            .add(R.id.container, imageDetailFragment, IMAGE_DETAIL_FRAGMENT_TAG)
             .addToBackStack(null)
+            .detach(currentFragment!!)
+            .add(R.id.container, imageDetailFragment, IMAGE_DETAIL_FRAGMENT_TAG)
+            .addSharedElement(imageViewPostDetail, imageViewPostDetail.transitionName)
             .commit()
     }
 

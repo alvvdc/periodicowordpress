@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter
 import android.content.Context
 import android.os.Bundle
 import android.text.Html
+import android.transition.TransitionInflater
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -32,6 +33,9 @@ class ImageDetailFragment : Fragment() {
         if (arguments != null) {
             media = arguments?.getParcelable("MEDIA") ?: MediaBO(-1, Date(), Date(), "", Rendered(""), User(-1, "", "", "", "", AvatarUrls("", "", "")), Rendered(""), Rendered(""), "", "", "", MediaDetails(-1, -1, "", Sizes()), -1, "")
         }
+
+        sharedElementEnterTransition = TransitionInflater.from(activity).inflateTransition(R.transition.image_transition)
+        sharedElementReturnTransition = TransitionInflater.from(activity).inflateTransition(R.transition.image_transition)
     }
 
     override fun onAttach(context: Context) {

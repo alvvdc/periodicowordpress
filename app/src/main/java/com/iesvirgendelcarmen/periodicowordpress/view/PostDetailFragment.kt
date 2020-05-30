@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Html
+import android.transition.TransitionInflater
 import android.util.Log
 import android.view.*
 import android.widget.Button
@@ -55,6 +56,9 @@ class PostDetailFragment : Fragment() {
         super.onCreate(savedInstanceState)
         getPostFromBundle()
         getCategoryColorFromBundle()
+
+        sharedElementEnterTransition = TransitionInflater.from(activity).inflateTransition(R.transition.image_transition)
+        sharedElementReturnTransition = TransitionInflater.from(activity).inflateTransition(R.transition.image_transition)
     }
 
     override fun onAttach(context: Context) {
