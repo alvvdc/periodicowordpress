@@ -6,20 +6,20 @@ import android.content.Context
 import android.os.Bundle
 import android.text.Html
 import android.transition.TransitionInflater
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.util.Log
+import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.iesvirgendelcarmen.periodicowordpress.CloseFragmentListener
-
 import com.iesvirgendelcarmen.periodicowordpress.R
 import com.iesvirgendelcarmen.periodicowordpress.model.businessObject.MediaBO
 import com.iesvirgendelcarmen.periodicowordpress.model.wordpress.*
 import java.util.*
+import kotlin.math.abs
+
 
 class ImageDetailFragment : Fragment() {
 
@@ -44,7 +44,10 @@ class ImageDetailFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_image_detail, container, false)
+        val gestureDetector = getSwipeGestureDetector()
+        val view = inflater.inflate(R.layout.fragment_image_detail, container, false)
+        view.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
+        return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -109,5 +112,30 @@ class ImageDetailFragment : Fragment() {
 
         constraintLayout.setOnClickListener(fadeClickListener)
         //mediaImageView.setOnClickListener(fadeClickListener)
+    }
+
+    private fun getSwipeGestureDetector(): GestureDetector {
+        return GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+
+            private val SWIPE_THRESHOLD = 100
+            private val SWIPE_VELOCITY_THRESHOLD = 100
+
+            override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
+                try {
+                    val diffY = e2!!.y - e1!!.y
+                    val diffX = e2.x - e1.x
+
+                    if (!(abs(diffX) > abs(diffY))) {
+                        if (abs(diffY) > SWIPE_THRESHOLD && abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                            if (!(diffY > 0)) {
+                                closeFragmentListener.onClickCloseFragment()
+                            }
+                        }
+                    }
+                } catch (exception: Exception) { }
+
+                return super.onFling(e1, e2, velocityX, velocityY)
+            }
+        })
     }
 }
